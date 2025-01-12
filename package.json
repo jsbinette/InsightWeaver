@@ -1,0 +1,490 @@
+{
+  "name": "instructions-manager",
+  "displayName": "Instructions Manager",
+  "description": "Customizable Instructions Tags for LLM",
+  "version": "0.0.1",
+  "license": "GPLv3",
+  "publisher": "jsbinette",
+  "bugs": {
+    "url": "https://github.com/jsbinette/instructions-extension/issues",
+    "email": "jsbinette@yahoo.com"
+  },
+  "homepage": "https://github.com/jsbinette/instructions-extension/main/README.md",
+  "repository": {
+    "url": "https://github.com/ismailkasan/instructions-extension",
+    "type": "git"
+  },
+  "keywords": [
+    "openai",
+    "chatgpt",
+    "gpt",
+    "chat",
+    "ai"
+  ],
+  "icon": "out/media/chat-instruciton-logo@4x.png",
+  "galleryBanner": {
+    "color": "#0000FF",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.start",
+    "onCommand:instructions-manager.jumpToRange"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chat-gpt-view",
+          "title": "Chat Gpt",
+          "icon": "./out/media/activity-bar-logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "chat-gpt-view": [
+        {
+          "type": "webview",
+          "id": "chat-gpt-view-id",
+          "name": "Chat Panel"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "instructionsExplorer",
+          "name": "Instructions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "instructions-manager.start",
+        "title": "Ask to ChatGpt"
+      },
+      {
+        "command": "instructions-manager.start-image",
+        "title": "Start Image"
+      },
+      {
+        "command": "instructions-manager.refactor",
+        "title": "ChatGpt Refactor"
+      },
+      {
+        "command": "instructions-manager.addComments",
+        "title": "ChatGpt Add Comments"
+      },
+      {
+        "command": "instructions-manager.addDocumentaion",
+        "title": "ChatGpt Add Documentaion"
+      },
+      {
+        "command": "instructions-manager.refresh",
+        "title": "Quick-Refresh View",
+        "category": "instructions",
+        "icon": {
+          "light": "images/refresh-light.svg",
+          "dark": "images/refresh-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.toggleShowVisibleFilesOnly",
+        "title": "Toggle: Show Tags for Visible Editors / All Files",
+        "category": "instructions",
+        "icon": {
+          "light": "images/toggle-files-light.svg",
+          "dark": "images/toggle-files-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.toggleViewKeepFilesExpanded",
+        "title": "Toggle: Keep File View expanded",
+        "category": "instructions",
+        "icon": "images/toggle-expanded.svg"
+      },
+      {
+        "command": "instructions-manager.jumpToPrevious",
+        "title": "Jump to Previous",
+        "category": "instructions",
+        "icon": {
+          "light": "images/jump-previous.svg",
+          "dark": "images/jump-previous-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.jumpToNext",
+        "title": "Jump to Next",
+        "category": "instructions",
+        "icon": {
+          "light": "images/jump-next.svg",
+          "dark": "images/jump-next-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.chooseFilterWords",
+        "title": "DOES NOT WORK Filter View ...",
+        "category": "instructions",
+        "icon": {
+          "light": "images/filter-light.svg",
+          "dark": "images/filter-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.showSelectTag",
+        "title": "Select Tag",
+        "category": "instructions"
+      },
+      {
+        "command": "instructions-manager.showSelectVisibleTag",
+        "title": "Select Visible Tag",
+        "category": "instructions"
+      },
+      {
+        "command": "instructions-manager.listTags",
+        "title": "List Tags",
+        "category": "instructions"
+      },
+      {
+        "command": "instructions-manager.listVisibleTags",
+        "title": "List Visible Tags",
+        "category": "instructions"
+      },
+      {
+        "command": "instructions-manager.scanWorkspace",
+        "title": "Scan Workspace for Tags",
+        "category": "instructions",
+        "icon": {
+          "light": "images/scan-workspace.svg",
+          "dark": "images/scan-workspace-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.debug.state.reset",
+        "title": "Reset the internal state to fix potential problems",
+        "category": "instructions:Debug"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "instructions-manager.addDocumentaion",
+        "key": "ctrl+alt+d",
+        "mac": "shift+cmd+d"
+      },
+      {
+        "command": "instructions-manager.addComments",
+        "key": "ctrl+alt+c",
+        "mac": "shift+cmd+c"
+      },
+      {
+        "command": "instructions-manager.refactor",
+        "key": "ctrl+alt+r",
+        "mac": "shift+cmd+r"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "instructions-manager.start",
+          "when": "false"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "instructions-manager.refactor",
+          "group": "ChatGpt",
+          "when": "editorLangId == typescript || editorLangId == javascript || editorLangId == csharp || editorLangId == java"
+        },
+        {
+          "command": "instructions-manager.addComments",
+          "group": "ChatGpt"
+        },
+        {
+          "command": "instructions-manager.addDocumentaion",
+          "group": "ChatGpt",
+          "when": "editorLangId == typescript || editorLangId == javascript || editorLangId == csharp || editorLangId == java"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "instructions-manager.jumpToPrevious",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "instructions-manager.jumpToNext",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "instructions-manager.chooseFilterWords",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@3"
+        },
+        {
+          "command": "instructions-manager.toggleShowVisibleFilesOnly",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@4"
+        },
+        {
+          "command": "instructions-manager.refresh",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@5"
+        },
+        {
+          "command": "instructions-manager.scanWorkspace",
+          "when": "view == instructionsExplorer",
+          "group": "navigation@6"
+        }
+      ]
+    },
+    "webviews": [
+      {
+        "viewType": "markdown.preview",
+        "icon": {
+          "light": "./out/media/chat-instruciton-logo@4x.png",
+          "dark": "./out/media/chat-instruciton-logo@4x.png"
+        }
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Instructions Manager",
+      "properties": {
+        "instructions-manager.enable": {
+          "category": "general",
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/Disable the extension."
+        },
+        "instructions-manager.view.showVisibleFilesOnly": {
+          "category": "view",
+          "type": "boolean",
+          "default": false,
+          "description": "Show tags for visible editors/files only."
+        },
+        "instructions-manager.view.showVisibleFilesOnlyMode": {
+          "category": "view",
+          "type": "string",
+          "enum": [
+            "allVisibleEditors",
+            "onlyActiveEditor"
+          ],
+          "default": "allVisibleEditors",
+          "description": "Select 'Show Visible editors only' mode. Either show tags for all visible editors or only for the currently selected editor. default: All Visible Editors"
+        },
+        "instructions-manager.view.expanded": {
+          "category": "view",
+          "type": "boolean",
+          "default": false,
+          "description": "Keep File View expanded otherwise collapsed."
+        },
+        "instructions-manager.view.follow": {
+          "category": "view",
+          "type": "boolean",
+          "default": true,
+          "description": "Follow tags while clicking in the editor window. Highlights nearest tags in the tags view. (see `view.followMode` to change the follow behavior)"
+        },
+        "instructions-manager.view.followMode": {
+          "category": "view",
+          "type": "string",
+          "enum": [
+            "nearest",
+            "chapter"
+          ],
+          "default": "nearest",
+          "markdownDescription": "Follow mode for highlighting tags in the tags view. **nearest** (Default): highlight nearest tag relative to the current selection. **chapter**: highlight nearest tag before or on the currently selected line."
+        },
+        "instructions-manager.view.lineMode": {
+          "category": "view",
+          "type": "string",
+          "enum": [
+            "selected-tag",
+            "current-line"
+          ],
+          "default": "selected-tag",
+          "description": "Defines Jump to Next/Previous Tag behavior. **selected-tag** (Default): jump based on selected tag in editor. **current-line**: jump based on the current selected line number in the editor."
+        },
+        "instructions-manager.view.words.hide": {
+          "category": "view",
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Hide tags/trigger words in tag view if a comment was provided."
+        },
+        "instructions-manager.view.exclude.gitIgnore": {
+          "category": "view",
+          "type": "boolean",
+          "default": ".json",
+          "markdownDescription": "Hide items from the tag view that match an exclusion defined by a .gitignore file (requires reload)"
+        },
+        "instructions-manager.default.words.red": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@out[\\s],@out-file[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `red`."
+        },
+        "instructions-manager.default.words.green": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@instr\\-header[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `green`."
+        },
+        "instructions-manager.default.words.blue": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@world[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `blue`."
+        },
+        "instructions-manager.default.words.purple": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@plot[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `purple`."
+        },
+        "instructions-manager.default.words.brown": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `brown`."
+        },
+        "instructions-manager.default.words.sky": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@character[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `sky`."
+        },
+        "instructions-manager.default.words.lime": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@facts[\\s]",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `lime`."
+        },
+        "instructions-manager.default.words.yellow": {
+          "category": "trigger words",
+          "type": "string",
+          "default": "@summarize\\((.*?)\\)[\\s],@end-summarize",
+          "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `yellow`."
+        },
+        "instructions-manager.exceptions.words.ignore": {
+          "category": "exceptions",
+          "type": "string",
+          "default": "",
+          "markdownDescription": "A comma-separated list of tags/trigger words (`instructions-manager.words`) that will not be decorated."
+        },
+        "instructions-manager.exceptions.file.extensions.ignore": {
+          "category": "exceptions",
+          "type": "string",
+          "default": "",
+          "markdownDescription": "A comma-separated list of file extensions to ignore (e.g. .java)."
+        },
+        "instructions-manager.expert.custom.styles": {
+          "category": "expert",
+          "type": "object",
+          "default": {},
+          "description": "Specify Custom Decoration Profiles",
+          "properties": {}
+        },
+        "instructions-manager.expert.custom.words.mapping": {
+          "category": "expert",
+          "type": "object",
+          "default": {},
+          "description": "Assigns tags/trigger words to decoration profiles",
+          "properties": {}
+        },
+        "instructions-manager.search.includes": {
+          "type": "array",
+          "default": [
+            "**/*"
+          ],
+          "description": "Glob patterns that defines the files to search for. Only include files you need, DO NOT USE `{**/*.*}` for both perfmormance and avoiding binary files reason.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "A glob pattern that defines the files to search for. Only include files you need, DO NOT USE `**/*.*` for both performance and avoiding binary files reason"
+              }
+            ]
+          }
+        },
+        "instructions-manager.search.excludes": {
+          "type": "array",
+          "default": [
+            "**/.git/**",
+            "**/node_modules/**",
+            "**/bower_components/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.vscode/**",
+            "**/.instructions/**",
+            "**/.github/**",
+            "**/_output/**",
+            "**/*.min.*",
+            "**/*.map",
+            "**/.next/**",
+            "package-lock.json",
+            "package.json",
+            "**/*.visx"
+          ],
+          "description": "Glob pattern that defines files and folders to exclude while listing annotations.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "A glob pattern that defines files and folders to exclude while listing annotations"
+              }
+            ]
+          }
+        },
+        "instructions-manager.search.maxFiles": {
+          "type": "number",
+          "default": 5120,
+          "description": "Max files for searching"
+        },
+        "instructions-manager.view.files.inFiles=": {
+          "category": "view",
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Use .instructions files with tags and processed instructions for debugging purposes  or others."
+        },
+        "instructions-manager.view.files.workspace": {
+          "category": "view",
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Use workspace state with tags to lead them when opening instead of a scan. This works only if not in files"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node ./esbuild.js",
+    "package": "NODE_ENV=production node ./esbuild.js",
+    "watch": "node ./esbuild.js --watch",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.77.0",
+    "@types/vscode-webview": "^1.57.1",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "@vscode/test-electron": "^2.3.0",
+    "esbuild": "^0.16.17",
+    "esbuild-copy-static-files": "^0.1.0",
+    "eslint": "^8.36.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.2",
+    "rxjs": "^7.8.0",
+    "undici": "^5.21.0",
+    "minimatch": "^9.0.3",
+    "vscode-uri": "^3.0.3"
+  }
+}
