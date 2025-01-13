@@ -313,7 +313,7 @@
           "category": "view",
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Hide tags/trigger words in tag view if a comment was provided."
+          "markdownDescription": "DOES NOT WORK (already strip the tag from the label in extractTextAfterLastAtWord) Hide tags/trigger words in tag view if a comment was provided."
         },
         "instructions-manager.view.exclude.gitIgnore": {
           "category": "view",
