@@ -49,7 +49,7 @@ export class ChatGptPanel {
      * Render method of webview that is triggered from "extension.ts" file.
      * @param context :vscode.ExtensionContext.
     */
-    public static render(context: vscode.ExtensionContext, tagsControllerPassed: TagsController) {
+    public static render(context: vscode.ExtensionContext, controller: TagsController) {
         // if exist show 
         if (ChatGptPanel.currentPanel) {
             ChatGptPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
@@ -65,8 +65,8 @@ export class ChatGptPanel {
                 retainContextWhenHidden: true
             });
 
-            this._tagsController = tagsControllerPassed;
-            this._instructionsController = new InstructionsController(context, tagsControllerPassed)
+            this._tagsController = controller;
+            this._instructionsController = new InstructionsController(context, controller)
 
             const logoMainPath = getVSCodeUri(extensionUri, ['out/media', 'chat-gpt-logo.jpeg']);
             const icon = {

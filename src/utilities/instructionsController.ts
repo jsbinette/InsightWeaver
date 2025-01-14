@@ -11,11 +11,11 @@ import { TagsController } from './tagsController';
 export class InstructionsController {
     private _context: vscode.ExtensionContext;
     private _tagsController: TagsController
-   
 
-    constructor(context: vscode.ExtensionContext, tagsControllerPassed: TagsController) {
+
+    constructor(context: vscode.ExtensionContext, controller: TagsController) {
         this._context = context;
-        this._tagsController = tagsControllerPassed
+        this._tagsController = controller
     }
 
     private async _processTags(inputJson: Record<string, any>) {
