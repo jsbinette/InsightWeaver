@@ -5,17 +5,18 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { getExtensionConfig } from '../utilities/utility.service';
 import { TagsController } from '../utilities/tagsController';
+import { InstructionsController } from '../utilities/instructionsController';
 
 
 class TagsDataModel {
-    private controller: TagsController;
+    private _tagsController: TagsController;
 
     constructor(controller: TagsController) {
-        this.controller = controller;
+        this._tagsController = controller;
     }
 
     getRoot(): TreeElement[] {
-        let fileTags = Object.keys(this.controller.tags);
+        let fileTags = Object.keys(this._tagsController.tags);
 
         if (getExtensionConfig().view.showVisibleFilesOnly) {
             let visibleEditorUris: string[];
@@ -82,8 +83,8 @@ class TagsDataModel {
                 return '';
             };
 
-            const tags = Object.keys(this.controller.tags[element.name]).flatMap((cat) => {
-                return this.controller.tags[element.name][cat].map((v: any) => {
+            const tags = Object.keys(this._tagsController.tags[element.name]).flatMap((cat) => {
+                return this._tagsController.tags[element.name][cat].map((v: any) => {
                     const location = new vscode.Location(element.resource, v.range);
                     return {
                         resource: element.resource,
@@ -93,7 +94,7 @@ class TagsDataModel {
                         type: NodeType.LOCATION,
                         category: cat,
                         parent: element,
-                        iconPath: this.controller.styles[cat]?.options?.gutterIconPath,
+                        iconPath: this._tagsController.styles[cat]?.options?.gutterIconPath,
                     };
                 });
             });
@@ -139,16 +140,16 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
     private _onDidChangeTreeData: vscode.EventEmitter<TreeElement | undefined | null | void> = new vscode.EventEmitter<TreeElement | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeElement | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    private controller: any; // Replace `any` with the actual type of your instructionsController
+    private _tagsController: TagsController;
     public model: TagsDataModel;
-    private filterTreeViewWords: string[];
-    private gitIgnoreHandler: { filter: (resource: vscode.Uri) => boolean } | undefined;
+    private _filterTreeViewWords: string[];
+    private _gitIgnoreHandler: { filter: (resource: vscode.Uri) => boolean } | undefined;
 
-    constructor(instructionsController: any) {
-        this.controller = instructionsController;
-        this.model = new TagsDataModel(instructionsController);
-        this.filterTreeViewWords = [];
-        this.gitIgnoreHandler = undefined;
+    constructor(controller: TagsController) {
+        this._tagsController = controller;
+        this.model = new TagsDataModel(controller);
+        this._filterTreeViewWords = [];
+        this._gitIgnoreHandler = undefined;
     }
 
     /** TreeDataProvider Methods */
@@ -205,7 +206,7 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
         if (!getExtensionConfig().view.words.hide || !label) {
             return label;
         }
-        const words = Object.values(this.controller.words).flat() as string[];
+        const words = Object.values(this._tagsController.words).flat() as string[];
         return words.reduce((prevs, word) => prevs.replace(new RegExp(word, 'g'), ''), label);
     }
 
@@ -214,16 +215,16 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
     /// I'm skipping the file level types (type 1) so the filter would not be that
     /// great anyway because the files would still ALL show
     private _filterTreeView(elements: TreeElement[]): TreeElement[] {
-        if (this.gitIgnoreHandler?.filter) {
-            elements = elements.filter((e) => this.gitIgnoreHandler!.filter(e.resource));
+        if (this._gitIgnoreHandler?.filter) {
+            elements = elements.filter((e) => this._gitIgnoreHandler!.filter(e.resource));
         }
 
-        if (this.filterTreeViewWords.length) {
+        if (this._filterTreeViewWords.length) {
             elements = elements.filter((e) => {
                 if (e.type === 1) {
                     return true; // Include all elements of type=1
                 } else if (e.type === 2) {
-                    return this.filterTreeViewWords.some((rx) => new RegExp(rx, 'g').test(e.label || ''));
+                    return this._filterTreeViewWords.some((rx) => new RegExp(rx, 'g').test(e.label || ''));
                 }
                 return false; // Exclude elements of other types
             });
@@ -235,11 +236,11 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
     /** Public Methods */
 
     setTreeViewFilterWords(words: string[]): void {
-        this.filterTreeViewWords = words;
+        this._filterTreeViewWords = words;
     }
 
     setTreeViewGitIgnoreHandler(gi: { filter: (resource: vscode.Uri) => boolean }): void {
-        this.gitIgnoreHandler = gi;
+        this._gitIgnoreHandler = gi;
     }
 
     refresh(): void {

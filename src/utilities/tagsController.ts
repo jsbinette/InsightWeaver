@@ -9,9 +9,9 @@ import { InstructionsController } from './instructionsController';
 
 
 export class TagsController {
-    private context: vscode.ExtensionContext;
+    private _context: vscode.ExtensionContext;
     public styles: Record<string, any>;
-    private words: Record<string, string[]>;
+    public words: Record<string, string[]>;
     public tags: Tags;
 
     public includePattern: string;
@@ -19,7 +19,7 @@ export class TagsController {
     public maxFilesLimit: number;
 
     constructor(context: vscode.ExtensionContext) {
-        this.context = context;
+        this._context = context;
         this.styles = this._reLoadDecorations();
         this.words = this._reLoadWords();
 
@@ -60,7 +60,7 @@ export class TagsController {
             await this._decorateWords(editor, this.words[style], style, editor.document.fileName.startsWith('extension-output-'));
         }
 
-        this.saveToWorkspace();
+        this._saveToWorkspace();
     }
 
     async updateTags(document: vscode.TextDocument): Promise<void> {
@@ -81,7 +81,7 @@ export class TagsController {
             await this._updateTagsForWordAndStyle(document, this.words[style], style);
         }
 
-        this.saveToWorkspace();
+        this._saveToWorkspace();
     }
 
     /** -- private -- */
@@ -252,7 +252,7 @@ export class TagsController {
             }
 
             //apply icon color if provided, otherwise fix the path
-            decoOptions.gutterIconPath = decoOptions.gutterIconColor ? this._getTagDataUri(decoOptions.gutterIconColor) : this.context.asAbsolutePath(decoOptions.gutterIconPath);
+            decoOptions.gutterIconPath = decoOptions.gutterIconColor ? this._getTagDataUri(decoOptions.gutterIconColor) : this._context.asAbsolutePath(decoOptions.gutterIconPath);
 
             //overview
             if (decoOptions.overviewRulerColor) {
@@ -271,7 +271,7 @@ export class TagsController {
     /// This function is called only by vscode settings click and it will remove
     public resetWorkspace() {
         if (!this._isWorkspaceAvailable()) return; //cannot save
-        this.context.workspaceState.update("tags.object", "{}");
+        this._context.workspaceState.update("tags.object", "{}");
         let workspaceFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
         fs.unlinkSync(workspaceFolder + '/.instructions/instructions-processed.md')
         fs.unlinkSync(workspaceFolder + '/.instructions/instructions.md')
@@ -284,7 +284,7 @@ export class TagsController {
         let allTags: Tags
 
         if (getExtensionConfig().view.files.workspace) {
-            allTags = JSON.parse(this.context.workspaceState.get("tags.object", "{}"));
+            allTags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
         } else {
             allTags = this.tags
         }
@@ -325,7 +325,7 @@ export class TagsController {
     /// I decided not to use this system anymore later on when I merge the code with the chat.
     /// I'm leaving it there for debug (for now) with a vscode setting boolean
     /// Instead of reloading from tags, I scan the workspace on opening
-    private async saveToWorkspace(): Promise<void> {
+    private async _saveToWorkspace(): Promise<void> {
         if (!this._isWorkspaceAvailable()) return;
         if (getExtensionConfig().view.files.inFiles) {
             let workspaceFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
@@ -340,7 +340,7 @@ export class TagsController {
                         return;
                     };
                 });
-                let instructionController = new InstructionsController(this.context, this)
+                let instructionController = new InstructionsController(this._context, this)
                 let output = await instructionController.getInstructions()
                 fs.writeFile(workspaceFolder + '/.instructions/instructions.md', output, (err) => {
                     if (err) {
@@ -350,7 +350,7 @@ export class TagsController {
                 });
             }
         } else if (getExtensionConfig().view.files.workspace) {
-            this.context.workspaceState.update("tags.object", JSON.stringify(this.tags));
+            this._context.workspaceState.update("tags.object", JSON.stringify(this.tags));
         }
     }
 
@@ -365,7 +365,7 @@ export class TagsController {
             const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'tags.json');
             this.tags = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } else if (getExtensionConfig().view.files.workspace) {
-            this.tags = JSON.parse(this.context.workspaceState.get("tags.object", "{}"));
+            this.tags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
         } //else this.tags == {} no arms done
 
         function deserializeTag(serializedTag: any): Tag {

@@ -85,7 +85,7 @@ export class ImagePanel {
 
                 switch (command) {
                     case "press-image-ask-button":
-                        this.askToChatGpt(message.data);
+                        this._askToChatGpt(message.data);
                         return;
                     case "image-clicked":
                         vscode.env.openExternal(vscode.Uri.parse(message.data));
@@ -145,7 +145,7 @@ export class ImagePanel {
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
      * @param question :string
      */
-    private askToChatGpt(question: string) {
+    private _askToChatGpt(question: string) {
         const storeData = getStoreData(this._context);
         const existApiKey = storeData.apiKey;
         const existImageSize = storeData.imageSize;
