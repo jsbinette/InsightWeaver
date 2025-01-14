@@ -9,16 +9,16 @@ import { TagsController } from './tagsController';
 
 
 export class InstructionsController {
-    private context: vscode.ExtensionContext;
-    private tagsController: TagsController
+    private _context: vscode.ExtensionContext;
+    private _tagsController: TagsController
    
 
     constructor(context: vscode.ExtensionContext, tagsControllerPassed: TagsController) {
-        this.context = context;
-        this.tagsController = tagsControllerPassed
+        this._context = context;
+        this._tagsController = tagsControllerPassed
     }
 
-    private async processTags(inputJson: Record<string, any>) {
+    private async _processTags(inputJson: Record<string, any>) {
         let output = []
         for (const filePath of Object.keys(inputJson)) {
             const sortedTags = inputJson[filePath]
@@ -68,7 +68,7 @@ export class InstructionsController {
     }
 
 
-    private async getSummary(variables: string, text: string): Promise<string> {
+    private async _getSummary(variables: string, text: string): Promise<string> {
         const params = variables.split(',');
         const name = params[0];
         let orig_ratio = params.length > 1 ? params[1].trim() : '1/10';
@@ -92,7 +92,7 @@ export class InstructionsController {
         if (!fs.existsSync(summarySourcePath) || fs.readFileSync(summarySourcePath, 'utf8') !== text || !fs.existsSync(summaryFilePath)) {
             // Update the summary
             fs.writeFileSync(summarySourcePath, text);
-            const storeData = getStoreData(this.context);
+            const storeData = getStoreData(this._context);
             const summary = await askToChatGpt(`Please summarize the following text: '''${text}''' The length of the summary should be ${orig_ratio} of the original text. Output only the summary but keep the title.  Following the title add in parenthesis (Summary ratio ${orig_ratio}) to indicate this is a summary. You can use markdown to format the summary.`, storeData.apiKey);
             fs.writeFileSync(summaryFilePath, summary);
         }
@@ -100,7 +100,7 @@ export class InstructionsController {
         return fs.readFileSync(summaryFilePath, 'utf8');
     }
 
-    private async processInstructionsFile(): Promise<void> {
+    private async _processInstructionsFile(): Promise<void> {
         const summarizeRegex = /@summarize\((.*?)\)\s([\s\S]*?)@end-summarize/g;
         const vscodeDirPath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions');
         const inputFilename = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'instructions.md');
@@ -121,7 +121,7 @@ export class InstructionsController {
 
         for (const match of matches) {
             if (match[0]) {
-                const summary = await this.getSummary(match[1], match[2]);
+                const summary = await this._getSummary(match[1], match[2]);
                 processedContent = processedContent.replace(match[0], summary + '\n');
             }
         }
@@ -134,12 +134,12 @@ export class InstructionsController {
         var instructions = 'No instructions found!';
         //files (debug) case handled here, and workspace or live tags handled in tagsController
         if (getExtensionConfig().view.files.inFiles) {
-            await this.processInstructionsFile();
+            await this._processInstructionsFile();
             //read instructions from file .instructions/instructions.md from the workspaceFolder
             const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'instructions-processed.md');
             instructions = fs.readFileSync(filePath, 'utf8');
         } else {
-            instructions = await this.processTags(this.tagsController.getTransformedTags())
+            instructions = await this._processTags(this._tagsController.getTransformedTags())
         }
         return instructions;
     }

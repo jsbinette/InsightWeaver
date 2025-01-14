@@ -12,18 +12,18 @@ import { InstructionsController } from "../utilities/instructionsController";
  */
 export class ChatGptPanel {
     public static currentPanel: ChatGptPanel | undefined;
-    private readonly panel: vscode.WebviewPanel;
-    private disposables: vscode.Disposable[] = [];
-    private context: vscode.ExtensionContext;
+    private readonly _panel: vscode.WebviewPanel;
+    private _disposables: vscode.Disposable[] = [];
+    private _context: vscode.ExtensionContext;
 
     // The tagsController is passed by the app, not resinstantiated here
     // because we need the "live" tags
-    private static tagsController : TagsController;
+    private static _tagsController: TagsController;
 
-    private static instructionsController: InstructionsController
+    private static _instructionsController: InstructionsController
 
     // declare an array for search history.
-    private searchHistory: string[] = [];
+    private _searchHistory: string[] = [];
 
     /**
      * Constructor
@@ -32,17 +32,17 @@ export class ChatGptPanel {
      * @param extensionUri :vscode.Uri.
      */
     private constructor(context: vscode.ExtensionContext, panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-        this.context = context;
-        this.panel = panel;
-        this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+        this._context = context;
+        this._panel = panel;
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
-        this.panel.webview.html = this.getWebviewContent(this.panel.webview, extensionUri);
-        this.setWebviewMessageListener(this.panel.webview);
+        this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
+        this._setWebviewMessageListener(this._panel.webview);
 
         this.sendHistoryAgain();
 
         //clear chat
-        setChatData(this.context, []);
+        setChatData(this._context, []);
     }
 
     /**
@@ -52,7 +52,7 @@ export class ChatGptPanel {
     public static render(context: vscode.ExtensionContext, tagsControllerPassed: TagsController) {
         // if exist show 
         if (ChatGptPanel.currentPanel) {
-            ChatGptPanel.currentPanel.panel.reveal(vscode.ViewColumn.One);
+            ChatGptPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
         } else {
             // if not exist create a new one.
             const extensionUri: vscode.Uri = context.extensionUri;
@@ -65,8 +65,8 @@ export class ChatGptPanel {
                 retainContextWhenHidden: true
             });
 
-            this.tagsController = tagsControllerPassed;
-            this.instructionsController = new InstructionsController(context, tagsControllerPassed)
+            this._tagsController = tagsControllerPassed;
+            this._instructionsController = new InstructionsController(context, tagsControllerPassed)
 
             const logoMainPath = getVSCodeUri(extensionUri, ['out/media', 'chat-gpt-logo.jpeg']);
             const icon = {
@@ -79,7 +79,7 @@ export class ChatGptPanel {
         }
 
         const historyData = getHistoryData(context);
-        ChatGptPanel.currentPanel.panel.webview.postMessage({ command: 'history-data', data: historyData });
+        ChatGptPanel.currentPanel._panel.webview.postMessage({ command: 'history-data', data: historyData });
     }
 
     /**
@@ -88,10 +88,10 @@ export class ChatGptPanel {
     public dispose() {
         ChatGptPanel.currentPanel = undefined;
 
-        this.panel.dispose();
+        this._panel.dispose();
 
-        while (this.disposables.length) {
-            const disposable = this.disposables.pop();
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
             if (disposable) {
                 disposable.dispose();
             }
@@ -102,25 +102,25 @@ export class ChatGptPanel {
      * Add listeners to catch messages from mainview js.
      * @param webview :vscode.Webview.
      */
-    private setWebviewMessageListener(webview: vscode.Webview) {
+    private _setWebviewMessageListener(webview: vscode.Webview) {
         webview.onDidReceiveMessage(
             async (message: any) => {
                 const command = message.command;
 
                 switch (command) {
                     case "press-ask-button":
-                        let instructions = await ChatGptPanel.instructionsController.getInstructions()
-                        this.panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
+                        let instructions = await ChatGptPanel._instructionsController.getInstructions()
+                        this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
                         if (instructions.length > 120000) {
                             //vscode.window.showInformationMessage('Instrucitons too long');
-                            ChatGptPanel.currentPanel?.panel.webview.postMessage({ command: 'error-message', data: 'Instrucitons too long' });
+                            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Instrucitons too long' });
                             return;
                         }
-                        this.askToChatGpt(message.data, instructions);
+                        this._askToChatGpt(message.data, instructions);
                         this.addHistoryToStore(message.data);
                         return;
                     case "press-ask-no-instr-button":
-                        this.askToChatGpt(message.data);
+                        this._askToChatGpt(message.data);
                         this.addHistoryToStore(message.data);
                         return;
                     case "history-question-clicked":
@@ -141,7 +141,7 @@ export class ChatGptPanel {
                 }
             },
             undefined,
-            this.disposables
+            this._disposables
         );
     }
 
@@ -151,7 +151,7 @@ export class ChatGptPanel {
      * @param extensionUri :vscode.Uri.
      * @returns string;
      */
-    private getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
         // get uris from out directory based on vscode.extensionUri
         const webviewUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "main-view.js"]);
@@ -207,41 +207,41 @@ export class ChatGptPanel {
      * @param hisrtoryQuestion :string
      */
     public clickHistoryQuestion(hisrtoryQuestion: string) {
-        this.askToChatGpt(hisrtoryQuestion);
+        this._askToChatGpt(hisrtoryQuestion);
     }
 
     public sendHistoryAgain() {
-        const historyData = getHistoryData(this.context);
-        this.panel.webview.postMessage({ command: 'history-data', data: historyData });
+        const historyData = getHistoryData(this._context);
+        this._panel.webview.postMessage({ command: 'history-data', data: historyData });
     }
 
     /**
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
      * @param question :string
      */
-    private askToChatGpt(question: string, systemcontent: string = "") {
+    private _askToChatGpt(question: string, systemcontent: string = "") {
         if (question == undefined || question == null || question == '') {
             //vscode.window.showInformationMessage('Please enter a question!');
-            ChatGptPanel.currentPanel?.panel.webview.postMessage({ command: 'error-message', data: 'Please enter a question!' });
+            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please enter a question!' });
             return;
         }
-        const storeData = getStoreData(this.context);
+        const storeData = getStoreData(this._context);
         const existApiKey = storeData.apiKey;
         const existTemperature = storeData.temperature;
         var asssistantResponse = { role: "assistant", content: '' };
         if (existApiKey == undefined || existApiKey == null || existApiKey == '') {
             //vscode.window.showInformationMessage('Please add your ChatGpt api key!');
-            ChatGptPanel.currentPanel?.panel.webview.postMessage({ command: 'error-message', data: 'Please add your ChatGpt api key!' });
+            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please add your ChatGpt api key!' });
         } else if (existTemperature == undefined || existTemperature == null || existTemperature == 0) {
             //vscode.window.showInformationMessage('Please add temperature!');
-            ChatGptPanel.currentPanel?.panel.webview.postMessage({ command: 'error-message', data: 'Please add temperature!' });
+            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please add temperature!' });
 
         }
         else {
             // make the message
             let questionMessage = { role: "user", content: question };
             // get previous messages
-            let messages = getChatData(this.context);
+            let messages = getChatData(this._context);
             //if it's empty this is where we add the system message
             if (messages.length == 0) {
                 if (systemcontent != "") {
@@ -249,45 +249,45 @@ export class ChatGptPanel {
                 }
             }
             messages.push(questionMessage);
-            setChatData(this.context, messages);
+            setChatData(this._context, messages);
             askToChatGptAsStream(messages, existApiKey, existTemperature).subscribe(answer => {
                 //check for 'END MESSAGE' string, 
                 if (answer == 'END MESSAGE') {
-                    var chatData = getChatData(this.context);
+                    var chatData = getChatData(this._context);
                     chatData.push(asssistantResponse);
-                    setChatData(this.context, chatData);
+                    setChatData(this._context, chatData);
                 } else {
                     asssistantResponse.content += answer;
-                    ChatGptPanel.currentPanel?.panel.webview.postMessage({ command: 'answer', data: answer });
+                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'answer', data: answer });
                 }
             });
         }
     }
 
     clearHistory() {
-        this.searchHistory = [];
-        setHistoryData(this.context, this.searchHistory);
+        this._searchHistory = [];
+        setHistoryData(this._context, this._searchHistory);
     }
 
     clearChat() {
-        setChatData(this.context, []);
+        setChatData(this._context, []);
     }
 
     addHistoryToStore(question: string) {
-        this.searchHistory = getHistoryData(this.context);
-        this.searchHistory.push(question);
-        setHistoryData(this.context, this.searchHistory);
+        this._searchHistory = getHistoryData(this._context);
+        this._searchHistory.push(question);
+        setHistoryData(this._context, this._searchHistory);
     }
 
     getHistoryFromStore() {
-        const history = getHistoryData(this.context);
+        const history = getHistoryData(this._context);
         return history;
     }
 
     async showInstuctionSet() {
-        let instructions = await ChatGptPanel.instructionsController.getInstructions()
-        this.panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
-        this.panel.webview.postMessage({ command: 'instructions-data', data: instructions});
+        let instructions = await ChatGptPanel._instructionsController.getInstructions()
+        this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
+        this._panel.webview.postMessage({ command: 'instructions-data', data: instructions });
     }
 
 }

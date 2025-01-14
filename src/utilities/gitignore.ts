@@ -6,10 +6,10 @@ import ignore, { Ignore } from 'ignore';
 import * as path from 'path';
 
 export class GitIgnore {
-    private gitIgnoreFile: Record<string, { ignore: Ignore; cache: Record<string, boolean> }>;
+    private _gitIgnoreFile: Record<string, { ignore: Ignore; cache: Record<string, boolean> }>;
 
     constructor() {
-        this.gitIgnoreFile = {}; // { ignore: GitIgnore instance, cache: {path => result}}
+        this._gitIgnoreFile = {}; // { ignore: GitIgnore instance, cache: {path => result}}
     }
 
     /**
@@ -18,7 +18,7 @@ export class GitIgnore {
      */
     onDidChange(uri: vscode.Uri): void {
         vscode.workspace.fs.readFile(uri).then((data) => {
-            this.gitIgnoreFile[Utils.dirname(uri).toString()] = {
+            this._gitIgnoreFile[Utils.dirname(uri).toString()] = {
                 ignore: ignore().add(new TextDecoder().decode(data)),
                 cache: {}, // fullpath -> result
             };
@@ -30,7 +30,7 @@ export class GitIgnore {
      * @param uri URI of the deleted file.
      */
     onDidDelete(uri: vscode.Uri): void {
-        delete this.gitIgnoreFile[Utils.dirname(uri).toString()];
+        delete this._gitIgnoreFile[Utils.dirname(uri).toString()];
     }
 
     /**
@@ -38,17 +38,17 @@ export class GitIgnore {
      * @param uri URI of the target file.
      * @returns Array of sorted .gitignore locations.
      */
-    private getActiveIgnorePatternsForFile(uri: vscode.Uri): string[] {
+    private _getActiveIgnorePatternsForFile(uri: vscode.Uri): string[] {
         function isSubdir(parent: string, target: string): boolean {
             const relative = path.relative(parent, target);
             return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
         }
 
-        if (!Object.keys(this.gitIgnoreFile).length) {
+        if (!Object.keys(this._gitIgnoreFile).length) {
             return [];
         }
 
-        return Object.keys(this.gitIgnoreFile)
+        return Object.keys(this._gitIgnoreFile)
             .filter((gitIgnoreLocation) =>
                 isSubdir(vscode.Uri.parse(gitIgnoreLocation).fsPath, uri.fsPath)
             )
@@ -61,13 +61,13 @@ export class GitIgnore {
      * @returns True if the file should be ignored, otherwise false.
      */
     ignores(uri: vscode.Uri): boolean {
-        const gitIgnoreFiles = this.getActiveIgnorePatternsForFile(uri);
+        const gitIgnoreFiles = this._getActiveIgnorePatternsForFile(uri);
         if (!gitIgnoreFiles) {
             return true;
         }
 
         const ignoreIt = gitIgnoreFiles.some((gitIgnoreLocation) => {
-            const ig = this.gitIgnoreFile[gitIgnoreLocation];
+            const ig = this._gitIgnoreFile[gitIgnoreLocation];
             if (ig.cache[uri.fsPath] !== undefined) {
                 return ig.cache[uri.fsPath]; // Return cached result
             }

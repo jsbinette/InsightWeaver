@@ -7,16 +7,16 @@ import * as os from 'os';
 import { TagsController } from './tagsController';
 
 export class Commands {
-    private controller: TagsController;
+    private _tagsController: TagsController;
 
     constructor(controller: TagsController) {
-        this.controller = controller;
+        this._tagsController = controller;
     }
 
     refresh(): void {
-        Object.keys(this.controller.tags).forEach((uri) => {
+        Object.keys(this._tagsController.tags).forEach((uri) => {
             vscode.workspace.openTextDocument(vscode.Uri.parse(uri)).then((document) => {
-                this.controller.updateTags(document);
+                this._tagsController.updateTags(document);
             });
         });
     }
@@ -24,7 +24,7 @@ export class Commands {
     showSelectTag(filter?: (resource: string) => boolean, placeHolder?: string): void {
         const entries: CustomEntry[] = [];
 
-        Object.keys(this.controller.tags).forEach((uri) => {
+        Object.keys(this._tagsController.tags).forEach((uri) => {
             const resource = vscode.Uri.parse(uri).fsPath;
             const fname = path.parse(resource).base;
 
@@ -32,8 +32,8 @@ export class Commands {
                 return;
             }
 
-            Object.keys(this.controller.tags[uri]).forEach((cat) => {
-                this.controller.tags[uri][cat].forEach((b) => {
+            Object.keys(this._tagsController.tags[uri]).forEach((cat) => {
+                this._tagsController.tags[uri][cat].forEach((b) => {
                     entries.push({
                         label: b.text,
                         description: fname,
@@ -69,7 +69,7 @@ export class Commands {
 
         const entries: { label: string; description: string; target: vscode.Location }[] = [];
 
-        Object.keys(this.controller.tags).forEach((uri) => {
+        Object.keys(this._tagsController.tags).forEach((uri) => {
             const resource = vscode.Uri.parse(uri).fsPath;
             const fname = path.parse(resource).base;
 
@@ -77,8 +77,8 @@ export class Commands {
                 return;
             }
 
-            Object.keys(this.controller.tags[uri]).forEach((cat) => {
-                this.controller.tags[uri][cat].forEach((b) => {
+            Object.keys(this._tagsController.tags[uri]).forEach((cat) => {
+                this._tagsController.tags[uri][cat].forEach((b) => {
                     entries.push({
                         label: b.text,
                         description: fname,
@@ -112,7 +112,7 @@ export class Commands {
 
     scanWorkspaceTags(): void {
         vscode.workspace
-            .findFiles(this.controller.includePattern, this.controller.excludePattern, this.controller.maxFilesLimit)
+            .findFiles(this._tagsController.includePattern, this._tagsController.excludePattern, this._tagsController.maxFilesLimit)
             .then(
                 (files) => {
                     if (!files || files.length === 0) {
@@ -134,7 +134,7 @@ export class Commands {
                         if (isTextFile(file.fsPath)) {
                             vscode.workspace.openTextDocument(file).then(
                                 (document) => {
-                                    this.controller.updateTags(document);
+                                    this._tagsController.updateTags(document);
                                 },
                                 (err) => console.error(err)
                             );
