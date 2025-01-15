@@ -12,7 +12,7 @@ export class TagsController {
     private _context: vscode.ExtensionContext;
     public styles: Record<string, any>;
     public words: Record<string, string[]>;
-    public tags: Tags;
+    public tags: Tag[];
 
     public includePattern: string;
     public excludePattern: string;
@@ -23,7 +23,7 @@ export class TagsController {
         this.styles = this._reLoadDecorations();
         this.words = this._reLoadWords();
 
-        this.tags = {};
+        this.tags = [];
 
         const arrayToSearchGlobPattern = (config: string | string[]): string => {
             return Array.isArray(config)
@@ -117,7 +117,7 @@ export class TagsController {
         editor.setDecorations(decoStyle, locations);
 
         if (locations.length && !noAdd) {
-            this._addTag(editor.document, style, locations);
+            this._addTags(editor.document, style, locations);
         }
     }
 
@@ -129,13 +129,13 @@ export class TagsController {
         const locations = this._findWords(document, words);
 
         if (locations.length) {
-            this._addTag(document, style, locations);
+            this._addTags(document, style, locations);
         }
     }
 
-    private _findWords(document: vscode.TextDocument, words: string[]): { range: vscode.Range; text: string }[] {
+    private _findWords(document: vscode.TextDocument, words: string[]): Location[] {
         const text = document.getText();
-        const locations: { range: vscode.Range; text: string }[] = [];
+        const locations: Location[] = [];
 
         words.forEach((word) => {
             const regEx = new RegExp(word, 'g');
@@ -150,6 +150,7 @@ export class TagsController {
                     locations.push({
                         range: new vscode.Range(startPos, endPos),
                         text: document.getText(fullLine),
+                        tagName: word.indexOf("[") !== -1 ? word.substring(0, word.indexOf("[")) : word
                     });
                 }
             }
@@ -159,21 +160,80 @@ export class TagsController {
     }
 
     private _clearTagsOfFile(document: vscode.TextDocument): void {
-        const filename = document.uri.toString();
-        if (!this.tags.hasOwnProperty(filename)) return;
-        delete this.tags[filename];
+        const ressource = document.uri;
+        this.tags = this.tags.filter((tag) => tag.resource !== ressource);
     }
 
-    private _addTag(
+    private _addTags(
         document: vscode.TextDocument,
         style: string,
-        locations: { range: vscode.Range; text: string }[]
+        locations: Location[]
     ): void {
-        const filename = document.uri.toString();
-        if (!this.tags.hasOwnProperty(filename)) {
-            this.tags[filename] = {};
+        let sortedLocations: Location[];
+        function sortLocationsByRange(locations: Location[]): Location[] {
+            return locations.sort((a, b) => {
+                const startComparison = a.range.start.compareTo(b.range.start);
+                if (startComparison !== 0) {
+                    return startComparison;
+                }
+                return a.range.end.compareTo(b.range.end);
+            });
         }
-        this.tags[filename][style] = locations;
+
+        sortedLocations = sortLocationsByRange(locations);
+
+        //do the processTag here
+        for (let i = 0; i < sortedLocations.length; i++) {
+            let curTagStart: number
+            let curTagLineStart: number
+            let nextTagStart: number
+            let nextTagLineStart: number
+            let tagEnd: number
+
+            curTagStart = document.offsetAt(sortedLocations[i].range.start)
+            curTagLineStart = curTagStart - sortedLocations[i].range.start.character
+
+            if (i + 1 < sortedLocations.length) {
+                nextTagStart = document.offsetAt(sortedLocations[i + 1].range.start)
+
+                if (sortedLocations[i + 1].range.start.character !== 0 && sortedLocations[i + 1].range.start.line !== sortedLocations[i + 1].range.start.line) {
+                    nextTagLineStart = nextTagStart - sortedLocations[i + 1].range.start.character
+                } else {
+                    nextTagLineStart = nextTagStart
+                }
+                tagEnd = nextTagLineStart
+            } else {
+                tagEnd = document.offsetAt(document.lineAt(document.lineCount - 1).range.end)
+            }
+            //will eventually need to handle the case where the tag is the last thing in the file
+            let textBeforeTagRange = new vscode.Range(document.positionAt(curTagLineStart), document.positionAt(curTagStart))
+            let textAfterTagRange = new vscode.Range(document.positionAt(document.offsetAt(sortedLocations[i].range.end) + 1), document.positionAt(tagEnd))
+            
+            /*
+             * HANDLING OF THE @out TAG
+             * For instructions: Since the text of the tag before out will not be out, just skip the out tags in the getInstructions function.
+             * For data-view: We will mark the preceding tag as out and not output it in the data-view.
+             * HANLDING OF THE @out-file TAG
+             * For instructions: We can check the tag before outputing the instructions and filter those tags
+             * that have that resourse out.
+             * For data-view: We will mark all the tags with the same resource as out and will have to handle the status change of a single one to affect the others.
+             * I think we could output this @out-file tag with the command; and should we have it available for all files?
+             */
+
+            this.tags.push({
+                resource: document.uri,
+                tooltip: sortedLocations[i].text,
+                style: style,
+                iconPath: this.styles[style]?.options.gutterIconPath || this.styles['default'].options.gutterIconPath,
+                location: sortedLocations[i],
+                label: document.getText(new vscode.Range(sortedLocations[i].range.end, document.lineAt(sortedLocations[i].range.end.line).range.end)),
+                category: style,
+                tagName: sortedLocations[i].tagName,
+                out: false,
+                textBeforeTagRange: textBeforeTagRange,
+                textAfterTagRange: textAfterTagRange
+            });
+        }
     }
 
     private _reLoadWords(): Record<string, string[]> {
@@ -279,42 +339,6 @@ export class TagsController {
 
     }
 
-    public getTransformedTags(): TransformedData {
-        let transformedData: TransformedData = {}; // Use explicit type
-        let allTags: Tags
-
-        if (getExtensionConfig().view.files.workspace) {
-            allTags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
-        } else {
-            allTags = this.tags
-        }
-
-
-        // JAN2024: Order by file path
-        let sortedEntries = Object.entries(allTags).sort((a, b) => a[0].localeCompare(b[0]));
-
-        for (const [filePath, tags] of sortedEntries) {
-            let fileData: FileDataEntry[] = [];
-            for (const [tag, entries] of Object.entries(tags)) {
-                for (const entry of entries) {
-                    let tagTextSplit = entry.text.split(' ', 1);
-                    fileData.push({
-                        line: entry.range.start.line,
-                        startCharacter: entry.range.start.character,
-                        endCharacter: entry.range.end.character,
-                        tag: tagTextSplit[0].trim(),
-                        tagText: tagTextSplit.length > 1 ? tagTextSplit[1].substring(0, 50) : '',
-                    });
-                }
-            }
-
-            fileData.sort((a, b) => a.line - b.line || a.startCharacter - b.startCharacter);
-            transformedData[filePath] = fileData; // No error now
-        }
-
-        return transformedData;
-    }
-
 
     /// Jan2025 JSB 
     /// This function has been heavily modified from it's original version.
@@ -368,45 +392,36 @@ export class TagsController {
             this.tags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
         } //else this.tags == {} no arms done
 
-        function deserializeTag(serializedTag: any): Tag {
-            const start = new vscode.Position(serializedTag.range[0].line, serializedTag.range[0].character);
-            const end = new vscode.Position(serializedTag.range[1].line, serializedTag.range[1].character);
-            const range = new vscode.Range(start, end);
-            return {
-                range: range,
-                text: serializedTag.text
-            };
-        }
         //remove all non existing files
-        Object.keys(this.tags).forEach(filepath => {
-            const fsPath = vscode.Uri.parse(filepath).fsPath;
-            if (!fs.existsSync(fsPath) || minimatch(fsPath, this.excludePattern)) {
-                delete this.tags[filepath];
-                return;
-            }
-            Object.keys(this.tags[filepath]).forEach(cat => {
-                // For each category
-                this.tags[filepath][cat] = this.tags[filepath][cat].map((serializedTag: any) => {
-                    // Deserialize the serialized tag to a real Tag object
-                    return deserializeTag(serializedTag);
-                });
-            });
-        });
+        this.tags = this.tags.filter((tag) => fs.existsSync(tag.resource.fsPath));
     }
+
+    public groupBy<T>(array: T[], key: keyof T, keyToString: (keyValue: any) => string = String): { [key: string]: T[] } {
+        return array.reduce((result, currentValue) => {
+            const groupKey = keyToString(currentValue[key]);
+            if (!result[groupKey]) {
+                result[groupKey] = [];
+            }
+            result[groupKey].push(currentValue);
+            return result;
+        }, {} as { [key: string]: T[] });
+    }
+
+    // Example usage:
+    /*
+    const groupedByStyle = groupBy(tags, 'style');
+    const groupedByCategory = groupBy(tags, 'category');
+    const groupedByResource = groupBy(tags, 'resource', (uri) => uri.toString());
+    const groupedByIconPath = groupBy(tags, 'iconPath', (iconPath) => typeof iconPath === 'string' ? iconPath : JSON.stringify(iconPath));
+    
+    console.log(groupedByStyle);
+    console.log(groupedByCategory);
+    console.log(groupedByResource);
+    console.log(groupedByIconPath);
+    */
 }
 
 
-
-interface Tag {
-    range: vscode.Range;
-    text: string;
-}
-
-type Tags = {
-    [file: string]: {
-        [style: string]: Tag[];
-    };
-}
 
 interface FileDataEntry {
     line: number;
@@ -419,3 +434,24 @@ interface FileDataEntry {
 type TransformedData = {
     [filePath: string]: FileDataEntry[];
 };
+
+export interface Location {
+    range: vscode.Range;
+    text: string;
+    tagName: string;
+}
+
+export interface Tag {
+    resource: vscode.Uri;
+    tooltip?: string;
+    style: string;
+    iconPath: vscode.ThemeIcon | string | undefined;
+    location: Location
+    label: string;
+    category: string;
+    tagName: string;
+    out: boolean;
+    textBeforeTagRange: vscode.Range;
+    textAfterTagRange: vscode.Range;
+}
+

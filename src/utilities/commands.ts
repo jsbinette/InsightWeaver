@@ -32,13 +32,11 @@ export class Commands {
                 return;
             }
 
-            Object.keys(this._tagsController.tags[uri]).forEach((cat) => {
-                this._tagsController.tags[uri][cat].forEach((b) => {
-                    entries.push({
-                        label: b.text,
-                        description: fname,
-                        target: new vscode.Location(vscode.Uri.file(resource), b.range),
-                    });
+            this._tagsController.tags.forEach((b) => {
+                entries.push({
+                    label: b.label,
+                    description: fname,
+                    target: new vscode.Location(vscode.Uri.file(resource), b.location.range),
                 });
             });
         });
@@ -77,15 +75,13 @@ export class Commands {
                 return;
             }
 
-            Object.keys(this._tagsController.tags[uri]).forEach((cat) => {
-                this._tagsController.tags[uri][cat].forEach((b) => {
+                this._tagsController.tags.forEach((b) => {
                     entries.push({
-                        label: b.text,
+                        label: b.label,
                         description: fname,
-                        target: new vscode.Location(vscode.Uri.file(resource), b.range),
+                        target: new vscode.Location(vscode.Uri.file(resource), b.location.range),
                     });
                 });
-            });
         });
 
         if (entries.length === 0) {

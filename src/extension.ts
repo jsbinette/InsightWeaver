@@ -5,7 +5,7 @@ import { SideBarViewProvider } from './panels/side-bar-view-panel';
 import { getStoreData, getExtensionConfig } from './utilities/utility.service';
 import { registerContextMenuCommands } from './utilities/context-menu-command';
 import { ImagePanel } from './panels/image-view-panel';
-import { TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange, chooseFilterWords } from './webviews/tree-data-view';
+import { TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange, chooseGroupBy } from './webviews/tree-data-view';
 import { TagsController } from './utilities/tagsController';
 import { Commands } from './utilities/commands';
 import { GitIgnore } from './utilities/gitignore';
@@ -87,8 +87,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.chooseFilterWords", (words: string[] | undefined) => {
-			chooseFilterWords(words, treeDataProvider);
+		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", (words: string[] | undefined) => {
+			chooseGroupBy(treeDataProvider);
 			commands.refresh();
 			treeDataProvider.refresh();
 		})

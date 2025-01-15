@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getStoreData, getExtensionConfig } from './utility.service';
 import { askToChatGpt } from "../utilities/chat-gpt-api.service";
-import { TagsController } from './tagsController';
+import { TagsController, Tag } from './tagsController';
 
 
 export class InstructionsController {
@@ -18,57 +18,49 @@ export class InstructionsController {
         this._tagsController = controller
     }
 
-    private async _processTags(inputJson: Record<string, any>) {
-        let output = []
-        for (const filePath of Object.keys(inputJson)) {
-            const sortedTags = inputJson[filePath]
-            try {
-                const file = await vscode.workspace.openTextDocument(vscode.Uri.parse(filePath))
-                let fileContents = file.getText()
-                let firstTag = sortedTags[0]
-                firstTag.tagStart = fileContents.indexOf(firstTag.tag)
-                firstTag.tagLineStart = firstTag.tagStart - firstTag.startCharacter
-
-                for (let i = 0; i < sortedTags.length; i++) {
-                    const tag = sortedTags[i]
-                    let tagEnd
-
-                    if (i + 1 < sortedTags.length) {
-                        const nextTag = sortedTags[i + 1]
-                        nextTag.tagStart = fileContents.indexOf(nextTag.tag, tag.tagStart + tag.tag.length)
-
-                        if (nextTag.startCharacter !== 0 && tag.line !== nextTag.line) {
-                            nextTag.tagLineStart = nextTag.tagStart - nextTag.startCharacter
-                        } else {
-                            nextTag.tagLineStart = nextTag.tagStart
-                        }
-                        tagEnd = nextTag.tagLineStart
-                    } else {
-                        tagEnd = fileContents.length
-                    }
-                    let textBeforeTag = fileContents.substring(tag.tagLineStart, tag.tagStart)
-                    let textAfterTag = fileContents.substring(tag.tagStart + tag.tag.length + 1, tagEnd)
-                    if (tag.tag.indexOf('@summarize(') == 0) {
-                        textAfterTag = fileContents.substring(tag.tagStart, tagEnd) + '@end-summarize\n'
-                    }
-
-                    if (textAfterTag !== '' && tag.tag == '@out-file') {
-                        break //stop processing the file
-                    }
-
-                    if (textAfterTag !== '' && tag.tag !== '@out') {
-                        output.push(textBeforeTag + textAfterTag)
-                    }
-                }
-            } catch (error) {
-                console.error(error)
+    public async getInstructions(): Promise<string> {
+        var instructions = 'No instructions found!';
+        //files (debug) case handled here, and workspace or live tags handled in tagsController
+        if (getExtensionConfig().view.files.inFiles) {
+            await this._processInstructionsFileNOTUSEDNOW();
+            //read instructions from file .instructions/instructions.md from the workspaceFolder
+            const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'instructions-processed.md');
+            instructions = fs.readFileSync(filePath, 'utf8');
+        } else {
+            let allTags: Tag[]
+            if (getExtensionConfig().view.files.workspace) {
+                allTags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
+            } else {
+                allTags = this._tagsController.tags;
             }
+            //get instructions from tags
+            //filter tags to find tagName = @out-file
+            const outFileTags = allTags.filter(tag => tag.tagName === '@out-file');
+            //filter out of outTags all the tags that have resourse (URI) that are present in outFileTags
+            const instructionsTags = allTags.filter(tag => !outFileTags.some(outTag => outTag.resource === tag.resource));
+            //for any @out tag, set the out property of the preceding tag and remove this tag
+            for (let i = 0; i < instructionsTags.length; i++) {
+                if (instructionsTags[i].tagName === '@out') {
+                    instructionsTags[i - 1].out = true;
+                    instructionsTags.splice(i, 1);
+                }
+            }
+
+            //summary tags should be handled here later
+
+            //create instructions string from instructionsTags
+            let instructionChunks: string[] = [];
+            for (let i = 0; i < instructionsTags.length; i++) {
+                const tag = instructionsTags[i];
+                const document = await vscode.workspace.openTextDocument(tag.resource);
+                instructionChunks.push(document.getText(tag.textBeforeTagRange) + ' ' + document.getText(tag.textAfterTagRange))
+            }
+            instructions = instructionChunks.join('\n');
         }
-        return output.join('\n')
+        return instructions
     }
 
-
-    private async _getSummary(variables: string, text: string): Promise<string> {
+    private async _getSummaryNOTUSEDNOW(variables: string, text: string): Promise<string> {
         const params = variables.split(',');
         const name = params[0];
         let orig_ratio = params.length > 1 ? params[1].trim() : '1/10';
@@ -100,7 +92,7 @@ export class InstructionsController {
         return fs.readFileSync(summaryFilePath, 'utf8');
     }
 
-    private async _processInstructionsFile(): Promise<void> {
+    private async _processInstructionsFileNOTUSEDNOW(): Promise<void> {
         const summarizeRegex = /@summarize\((.*?)\)\s([\s\S]*?)@end-summarize/g;
         const vscodeDirPath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions');
         const inputFilename = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'instructions.md');
@@ -121,7 +113,7 @@ export class InstructionsController {
 
         for (const match of matches) {
             if (match[0]) {
-                const summary = await this._getSummary(match[1], match[2]);
+                const summary = await this._getSummaryNOTUSEDNOW(match[1], match[2]);
                 processedContent = processedContent.replace(match[0], summary + '\n');
             }
         }
@@ -129,19 +121,5 @@ export class InstructionsController {
         fs.writeFileSync(outputFilename, processedContent);
     }
 
-
-    public async getInstructions(): Promise<string> {
-        var instructions = 'No instructions found!';
-        //files (debug) case handled here, and workspace or live tags handled in tagsController
-        if (getExtensionConfig().view.files.inFiles) {
-            await this._processInstructionsFile();
-            //read instructions from file .instructions/instructions.md from the workspaceFolder
-            const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'instructions-processed.md');
-            instructions = fs.readFileSync(filePath, 'utf8');
-        } else {
-            instructions = await this._processTags(this._tagsController.getTransformedTags())
-        }
-        return instructions;
-    }
 }
 

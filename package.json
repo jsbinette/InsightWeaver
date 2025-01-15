@@ -2,7 +2,7 @@
   "name": "instructions-manager",
   "displayName": "Instructions Manager",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "GPLv3",
   "publisher": "jsbinette",
   "bugs": {
@@ -126,8 +126,8 @@
         }
       },
       {
-        "command": "instructions-manager.chooseFilterWords",
-        "title": "DOES NOT WORK Filter View ...",
+        "command": "instructions-manager.chooseGroupBy",
+        "title": "Choose how to group tags",
         "category": "instructions",
         "icon": {
           "light": "images/filter-light.svg",
@@ -221,7 +221,7 @@
           "group": "navigation@2"
         },
         {
-          "command": "instructions-manager.chooseFilterWords",
+          "command": "instructions-manager.chooseGroupBy",
           "when": "view == instructionsExplorer",
           "group": "navigation@3"
         },
