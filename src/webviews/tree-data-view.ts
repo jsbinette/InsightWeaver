@@ -8,7 +8,7 @@ import { TagsController, Tag, Location } from '../utilities/tagsController';
 import { InstructionsController } from '../utilities/instructionsController';
 
 
-class TagsDataModel {
+export class TagsDataModel {
     private _tagsController: TagsController;
 
     constructor(controller: TagsController) {
@@ -47,6 +47,7 @@ class TagsDataModel {
                 name: filename,
                 type: NodeType.FILE,
                 parent: null,
+                out: false,
                 children: tagsGroupedByFilenamesObj[filename].map((tag: Tag) => {
                     return {
                         resource: tag.resource,
@@ -55,6 +56,7 @@ class TagsDataModel {
                         location: tag.location,
                         type: NodeType.LOCATION,
                         parent: null,
+                        out: false,
                         iconPath: this._tagsController.styles[tag.category]?.options?.gutterIconPath,
                     };
                 }),
@@ -149,7 +151,7 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
 
     constructor(controller: TagsController) {
         this._tagsController = controller;
-        this.model = new TagsDataModel(controller);
+        this.model = new TagsDataModel(this._tagsController );
         this._filterTreeViewWords = [];
         this._gitIgnoreHandler = undefined;
     }
@@ -464,5 +466,6 @@ export interface TreeElement {
     location?: Location | null;
     label?: string;
     category?: string;
+    out: boolean;
     children?: TreeElement[];
 }

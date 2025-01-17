@@ -3,3 +3,4 @@
 /.vscodeignore
 /*.vsix
 /out
+node_modules
