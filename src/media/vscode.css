@@ -1,230 +1,236 @@
 :root {
-	--container-paddding: 20px;
-	--input-padding-vertical: 6px;
-	--input-padding-horizontal: 4px;
-	--input-margin-vertical: 4px;
-	--input-margin-horizontal: 0;
-	--height: 100%;
+    --container-paddding: 20px;
+    --input-padding-vertical: 6px;
+    --input-padding-horizontal: 4px;
+    --input-margin-vertical: 4px;
+    --input-margin-horizontal: 0;
+    --height: 100%;
 }
 
-html  {
-	height: 99%;
+html {
+    height: 99%;
 }
 
 body {
-	padding: 0 var(--container-paddding);
-	color: var(--vscode-foreground);
-	font-size: var(--vscode-font-size);
-	font-weight: var(--vscode-font-weight);
-	font-family: var(--vscode-font-family);
-	height: 100%;
+    padding: 0 var(--container-paddding);
+    color: var(--vscode-foreground);
+    font-size: var(--vscode-font-size);
+    font-weight: var(--vscode-font-weight);
+    font-family: var(--vscode-font-family);
+    height: 100%;
     /*margin: 0;
-	 background-color: var(--vscode-editor-background); */
+    background-color: var(--vscode-editor-background);*/
+}
+body.tree {
+    padding: 0;
+    margin: 0;
 }
 
 ol,
 ul {
-	padding-left: var(--container-paddding);
+    padding-left: var(--container-paddding);
+    list-style: none;
 }
 
 body>*,
 form>* {
-	margin-block-start: var(--input-margin-vertical);
-	margin-block-end: var(--input-margin-vertical);
+    margin-block-start: var(--input-margin-vertical);
+    margin-block-end: var(--input-margin-vertical);
 }
 
 *:focus {
-	outline-color: var(--vscode-focusBorder) !important;
+    outline-color: var(--vscode-focusBorder) !important;
 }
 
 a {
-	color: var(--vscode-textLink-foreground);
+    color: var(--vscode-textLink-foreground);
 }
 
 a:hover,
 a:active {
-	color: var(--vscode-textLink-activeForeground);
+    color: var(--vscode-textLink-activeForeground);
 }
 
 code {
-	font-size: var(--vscode-editor-font-size);
-	font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
 }
 
-
 button {
-	border: none;
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	width: 100%;
-	text-align: center;
-	outline: 1px solid transparent;
-	outline-offset: 2px !important;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-background);
+    border: none;
+    padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+    width: 100%;
+    text-align: center;
+    outline: 1px solid transparent;
+    outline-offset: 2px !important;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
 }
 
 button .danger {
-	color: #fff;
-	background-color: #d9534f;
-	border-color: #d43f3a
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
 }
 
 button:hover {
-	cursor: pointer;
-	background: var(--vscode-button-hoverBackground);
+    cursor: pointer;
+    background: var(--vscode-button-hoverBackground);
 }
 
 button:focus {
-	outline-color: var(--vscode-focusBorder);
+    outline-color: var(--vscode-focusBorder);
 }
 
 button.secondary {
-	color: var(--vscode-button-secondaryForeground);
-	background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    background: var(--vscode-button-secondaryBackground);
 }
 
 button.secondary:hover {
-	background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--vscode-button-secondaryHoverBackground);
 }
 
 input:not([type='checkbox']),
 textarea {
-	display: block;
-	width: 100%;
-	border: none;
-	font-family: var(--vscode-font-family);
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-	color: var(--vscode-input-foreground);
-	outline-color: var(--vscode-input-border);
-	background-color: var(--vscode-input-background);
+    display: block;
+    width: 100%;
+    border: none;
+    font-family: var(--vscode-font-family);
+    padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+    color: var(--vscode-input-foreground);
+    outline-color: var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
 }
 
 input::placeholder,
 textarea::placeholder {
-	color: var(--vscode-input-placeholderForeground);
+    color: var(--vscode-input-placeholderForeground);
 }
 
 #question-text-id {
-	font-size: larger;
+    font-size: larger;
 }
 
 .text-area {
-	width: 100%;
-	min-width: 300px;
-	min-height: auto;
+    width: 100%;
+    min-width: 300px;
+    min-height: auto;
 }
 
 .mt-20 {
-	margin-top: 20px !important;
+    margin-top: 20px !important;
 }
 
 .mt-30 {
-	margin-top: 30px !important;
+    margin-top: 30px !important;
 }
 
 .code {
-	white-space: pre-wrap;
-	color: #88b2cb; /* #cccccc */
-	background-color: transparent;
-	padding: 0px;
+    white-space: pre-wrap;
+    color: #88b2cb; /* #cccccc */
+    background-color: transparent;
+    padding: 0px;
 }
+
 .pre {
-	margin-top: 0;
+    margin-top: 0;
 }
 
 .danger {
-	color: #fff;
-	background-color: #d9534f;
-	border-color: #d43f3a
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
 }
+
 .grayish {
-	background-color: #404040;
+    background-color: #404040;
 }
+
 .instruction-button {
-	color: #fff;
-	background-color: #22825e;
+    color: #fff;
+    background-color: #22825e;
 }
 
 .answer-header {
-	padding-top: 12px;
+    padding-top: 12px;
 }
 
 .instructions {
-	color: #88cbb2;
+    color: #88cbb2;
 }
 
 .flex-container {
-	display: flex;
-	flex-direction: row;
-	justify-content: start;
-	align-items: center;
-	gap: 10px;
-	margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .chat-history {
-	margin-top: 10px;
-	font-weight: bold;
+    margin-top: 10px;
+    font-weight: bold;
 }
 
 .model {
-	bottom: 0;
-	position: absolute;
-	margin-bottom: 20px;
+    bottom: 0;
+    position: absolute;
+    margin-bottom: 20px;
 }
+
 .userChatLog {
-	color: chocolate;
-	padding-top: 15px;
-	padding-bottom: 15px;
+    color: chocolate;
+    padding-top: 15px;
+    padding-bottom: 15px;
 }
 
 .label-control {
-	max-width: 30px;
-	width: 30px;
+    max-width: 30px;
+    width: 30px;
 }
 
 .form-flex-container {
-	display: flex;
-	flex-direction: column;
-	justify-content: start;
-	align-items: start;
-	gap: 10px;
-	margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .p-header {
-	font-size: medium;
-	font-weight: bold;
+    font-size: medium;
+    font-weight: bold;
 }
 
 .info-message {
-	font-size: 11px;
-	color: #e26d0e;
+    font-size: 11px;
+    color: #e26d0e;
 }
 
-
 div.gallery {
-	margin: 5px;
-	border: 1px solid #ccc;
-	float: left;
-	width: 180px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    float: left;
+    width: 180px;
 }
 
 div.gallery:hover {
-	border: 1px solid #777;
+    border: 1px solid #777;
 }
 
 div.gallery img {
-	width: 100%;
-	height: auto;
+    width: 100%;
+    height: auto;
 }
 
 div.desc {
-	padding: 15px;
-	text-align: center;
-	color: white;
+    padding: 15px;
+    text-align: center;
+    color: white;
 }
-
 
 .content-container {
     display: flex;
@@ -235,7 +241,7 @@ div.desc {
 .top-section {
     flex-grow: 1; /* This makes the top section fill the available space */
     overflow-y: auto; /* Add scroll if content overflows */
-	padding: 10px;
+    padding: 10px;
 }
 
 .bottom-section {
@@ -244,5 +250,63 @@ div.desc {
 }
 
 .red {
-	color: red;
+    color: red;
+}
+
+.child-container li {
+    display: flex;
+}
+.toggle {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    margin-left: 10px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+ul.tree {
+    margin: 0;
+    padding: 0;
+}
+ul.tree li {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+li {
+    white-space: nowrap;
+}
+label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1;                /* use remaining space for label text */
+}
+label input[type="checkbox"] {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+li.grayed-out{
+    opacity: 0.5;
+}
+/* Child container is hidden unless expanded */
+.child-container {
+    display: none;
+    padding-left: 38px;
+}
+li.expanded > .child-container {
+    display: block;
+}
+select {
+    width: 100%;
+    padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+    color: var(--vscode-input-foreground);
+    outline-color: var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
 }

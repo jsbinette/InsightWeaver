@@ -62,7 +62,7 @@
         },
         {
           "type": "webview",
-          "id": "myDataTreeView",
+          "id": "treeView",
           "name": "Tags"
         }
       ]
@@ -227,7 +227,7 @@
         },
         {
           "command": "instructions-manager.chooseGroupBy",
-          "when": "view == instructionsExplorer",
+          "when": "treeView",
           "group": "navigation@3"
         },
         {

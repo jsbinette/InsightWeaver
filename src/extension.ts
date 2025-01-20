@@ -1,15 +1,15 @@
 
 import * as vscode from 'vscode';
-import { ChatGptPanel } from './panels/main-view-panel';
-import { SideBarViewProvider } from './panels/side-bar-view-panel';
+import { ImagePanel } from './panels/image-panel';
+import { ChatGptPanel } from './panels/main-panel';
+import { SideBarViewProvider } from './views/sidebar-view';
+import { InstructionTreeWebviewProvider } from './views/tree-view';
 import { getStoreData, getExtensionConfig } from './utilities/utility.service';
 import { registerContextMenuCommands } from './utilities/context-menu-command';
-import { ImagePanel } from './panels/image-view-panel';
-import { TagsDataModel, TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange, chooseGroupBy } from './webviews/tree-data-view';
+import { TagsDataModel, TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange } from './webviews/tree-data-view';
 import { TagsController } from './utilities/tagsController';
 import { Commands } from './utilities/commands';
 import { GitIgnore } from './utilities/gitignore';
-import { DataTreeViewProvider } from './panels/data-tree-panel';
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -17,7 +17,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const tagsController = new TagsController(context);
 	const commands = new Commands(tagsController)
 	const treeDataProvider = new TagsTreeDataProvider(tagsController);
-	const dataTreeViewProvider = new DataTreeViewProvider(context.extensionUri, new TagsDataModel(tagsController))
+	const tagsDataModel = new TagsDataModel(tagsController);
+	const instructionTreeWebviewProvider = new InstructionTreeWebviewProvider(context.extensionUri, tagsDataModel)
 
 	// Chat panel register
 	const chatPanelCommand = vscode.commands.registerCommand("instructions-manager.start", () => {
@@ -43,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerContextMenuCommands(storeData.apiKey);
 
 
-	/** Data-Tree View */
+	/** Instruction Tree View */
 	const treeView = vscode.window.createTreeView('instructionsExplorer', { treeDataProvider });
 	context.subscriptions.push(treeView);
 
@@ -62,7 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('instructions-manager.refresh', () => {
 			commands.refresh();
 			treeDataProvider.refresh();
-			dataTreeViewProvider.refresh();
+			instructionTreeWebviewProvider.refresh();
 		})
 	);
 
@@ -74,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			);
 			commands.refresh();
 			treeDataProvider.refresh();
-			dataTreeViewProvider.refresh();
+			instructionTreeWebviewProvider.refresh();
 		})
 	);
 
@@ -91,11 +92,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", (words: string[] | undefined) => {
-			chooseGroupBy(treeDataProvider);
+		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", (selectedChoice: string) => {
+			tagsDataModel.changeGoupBy(selectedChoice);
 			commands.refresh();
-			treeDataProvider.refresh();
-			dataTreeViewProvider.refresh();
+			//treeDataProvider.refresh();
+			instructionTreeWebviewProvider.refresh();
 		})
 	);
 
@@ -104,7 +105,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			tagsController.resetWorkspace();
 			tagsController.loadFromWorkspace();
 			treeDataProvider.refresh();
-			dataTreeViewProvider.refresh();
+			instructionTreeWebviewProvider.refresh();
 		})
 	);
 
@@ -139,13 +140,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(DataTreeViewProvider.viewId, dataTreeViewProvider)
+		vscode.window.registerWebviewViewProvider(InstructionTreeWebviewProvider.viewId, instructionTreeWebviewProvider)
 	);
 
 	/** Module Initialization */
 	commands.refresh();
 	treeDataProvider.refresh();
-	dataTreeViewProvider.refresh();
+	instructionTreeWebviewProvider.refresh();
 	onDidChange();
 
 	/** Event Setup */
@@ -192,7 +193,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (!editor) {
 			// If no editor, refresh only the tree view
 			treeDataProvider.refresh();
-			dataTreeViewProvider.refresh();
+			instructionTreeWebviewProvider.refresh();
 			return;
 		}
 
@@ -200,7 +201,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			await tagsController.decorate(editor);
 		}
 		treeDataProvider.refresh();
-		dataTreeViewProvider.refresh();
+		instructionTreeWebviewProvider.refresh();
 	}
 
 	async function onDidSave(editor?: vscode.TextEditor): Promise<void> {
@@ -208,7 +209,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			await tagsController.decorate(editor);
 		}
 		treeDataProvider.refresh();
-		dataTreeViewProvider.refresh();
+		instructionTreeWebviewProvider.refresh();
 	}
 
 

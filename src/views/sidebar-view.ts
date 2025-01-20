@@ -27,7 +27,7 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'out')]
 		};
 
-		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview, this._extensionUri);
+		webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri);
 
 		// Register message events that comes from the js.
 		this.addReceiveMessageEvents(webviewView.webview);
@@ -70,10 +70,10 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 	 * @param extensionUri: vscode.Uri
 	 * @returns string
 	 */
-	private _getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
+	private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
 		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "side-bar-view.js"]);
+		const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "sidebar-webview.js"]);
 
 		// Do the same for the stylesheet.
 		const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
@@ -85,12 +85,6 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-
-				<!--
-					Use a content security policy to only allow loading styles from our extension directory,
-					and only allow scripts that have a specific nonce.
-					(See the 'webview-sample' extension sample for img-src content security policy examples)
-				-->
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link href="${styleVSCodeUri}" rel="stylesheet">			

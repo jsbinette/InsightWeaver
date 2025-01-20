@@ -10,13 +10,31 @@ import { InstructionsController } from '../utilities/instructionsController';
 
 export class TagsDataModel {
     private _tagsController: TagsController;
+    private _groupBy: string;
 
-    constructor(controller: TagsController) {
+    constructor(controller: TagsController, groupBy: string = 'file') {
         this._tagsController = controller;
+        this._groupBy = groupBy;
+    }
+
+    public changeGoupBy(groupBy: string) {
+        this._groupBy = groupBy;
     }
 
     getRoot(): TreeElement[] {
-        let tagsGroupedByFilenamesObj = this._tagsController.groupBy(this._tagsController.tags, 'resource', (uri) => uri.toString());
+        let tagsGroupedByObj : {
+            [key: string]: Tag[];
+        }
+        if (this._groupBy === 'file') {
+            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'resource', (uri) => uri.toString());
+        } else if (this._groupBy === 'style') {
+            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'category');
+        } else if (this._groupBy === 'tagName'){
+            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'label');
+        } else { //default empty
+            tagsGroupedByObj = {};
+        }
+
 
         if (getExtensionConfig().view.showVisibleFilesOnly) {
             let visibleEditorUris: string[];
@@ -28,42 +46,117 @@ export class TagsDataModel {
                 visibleEditorUris = vscode.window.visibleTextEditors.map((te) => te.document.uri.path);
             }
 
-            Object.keys(tagsGroupedByFilenamesObj).forEach((filename) => {
-                tagsGroupedByFilenamesObj[filename].forEach((tag: Tag) => {
+            Object.keys(tagsGroupedByObj).forEach((filename) => {
+                tagsGroupedByObj[filename].forEach((tag: Tag) => {
                     // Remove tags that are not in visible editors
                     if (!visibleEditorUris.includes(tag.resource.path)) {
-                        tagsGroupedByFilenamesObj[filename].splice(tagsGroupedByFilenamesObj[filename].indexOf(tag), 1);
+                        tagsGroupedByObj[filename].splice(tagsGroupedByObj[filename].indexOf(tag), 1);
                     }
                 });
             });
         }
 
+
         let roots: TreeElement[] = []
-        Object.keys(tagsGroupedByFilenamesObj).forEach((filename) => {
-            roots.push({
-                resource: tagsGroupedByFilenamesObj[filename][0].resource,
-                iconPath: vscode.ThemeIcon.File,
-                label: path.basename(vscode.Uri.parse(filename).fsPath),
-                name: filename,
-                type: NodeType.FILE,
-                parent: null,
-                out: false,
-                children: tagsGroupedByFilenamesObj[filename].map((tag: Tag) => {
-                    return {
-                        resource: tag.resource,
-                        label: tag.label,
-                        name: tag.label.trim(),
-                        location: tag.location,
-                        type: NodeType.LOCATION,
-                        parent: null,
-                        out: false,
-                        iconPath: this._tagsController.styles[tag.category]?.options?.gutterIconPath,
-                    };
-                }),
-            });
+
+
+        
+        Object.keys(tagsGroupedByObj).forEach((item) => {
+            /*
+            RIGHT NOW they are all equivalent but that will change
+            */
+            if (this._groupBy === 'file') {
+                roots.push({
+                    resource: tagsGroupedByObj[item][0].resource,
+                    iconPath: vscode.ThemeIcon.File,
+                    label: path.basename(vscode.Uri.parse(item).fsPath),
+                    name: item,
+                    type: NodeType.FILE,
+                    parent: null,
+                    out: false,
+                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                })
+            } else if (this._groupBy === 'style') {
+                roots.push({
+                    resource: tagsGroupedByObj[item][0].resource,
+                    iconPath: this._tagsController.styles[item]?.options?.gutterIconPath,
+                    label: item,
+                    name: item,
+                    type: NodeType.FILE,
+                    parent: null,
+                    out: false,
+                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                });
+            } else if (this._groupBy === 'tagName') {
+                roots.push({
+                    resource: tagsGroupedByObj[item][0].resource,
+                    iconPath: vscode.ThemeIcon.File,
+                    label: item,
+                    name: item,
+                    type: NodeType.FILE,
+                    parent: null,
+                    out: false,
+                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                });
+            }
         });
-        return roots;
+
+        function getChildren(tags: Tag[], _tagsController: TagsController ): TreeElement[] {
+            return tags.map((tag: Tag) => {
+                return {
+                    resource: tag.resource,
+                    label: tag.label,
+                    name: tag.label.trim(),
+                    location: tag.location,
+                    type: NodeType.LOCATION,
+                    parent: null,
+                    out: false,
+                    iconPath: _tagsController.styles[tag.category]?.options?.gutterIconPath,
+                };
+            });
+        }
+        
+
+        function sortRootsByLabels(roots: TreeElement[]): TreeElement[] {
+            return roots.sort((a, b) => {
+                return a.label.localeCompare(b.label);
+            });
+        }
+
+        function sortChildrenByLocation(roots: TreeElement[]): TreeElement[] {
+            roots.forEach(root => {
+                if (root.children) {
+                    root.children = root.children.sort((a, b) => {
+                        if (a.location && b.location) {
+                            const startComparison = a.location.range.start.compareTo(b.location.range.start);
+                            if (startComparison !== 0) {
+                                return startComparison;
+                            }
+                            return a.location.range.end.compareTo(b.location.range.end);
+                        }
+                        return 0; // If either location is undefined, consider them equal
+                    });
+                }
+            });
+            return roots;
+        }
+
+        function assignParents(roots: TreeElement[]): TreeElement[] {
+            roots.forEach(root => {
+                if (root.children) {
+                    root.children.forEach(child => {
+                        child.parent = root;
+                    });
+                }
+            });
+            return roots;
+        }
+
+
+
+        return assignParents(sortChildrenByLocation(sortRootsByLabels(roots)));
     }
+
 
     getChildren(element: TreeElement): TreeElement[] {
         if (element.type === NodeType.FILE) {
@@ -107,36 +200,36 @@ export class TagsDataModel {
         return element.children || [];
     }
 
-    /*
-             getNeighbors(element: TreeElement): { previous: TreeElement | null; next: TreeElement | null } {
-                 const ret: { previous: TreeElement | null; next: TreeElement | null } = { previous: null, next: null };
-                 let parent = element.parent;
-     
-                 if (!parent) {
-                     parent = { ...element, type: NodeType.FILE, name: element.resource.toString() } as TreeElement;
-                 }
-     
-                 const tags = this.getChildren(parent);
-     
-                 let gotElement = false;
-     
-                 for (const b of tags) {
-                     if (!gotElement && JSON.stringify(b.location) === JSON.stringify(element.location)) {
-                         gotElement = true;
-                         continue;
-                     }
-     
-                     if (!gotElement) {
-                         ret.previous = b;
-                     } else {
-                         ret.next = b;
-                         break;
-                     }
-                 }
-     
-                 return ret;
-             }
-     */
+    getNeighbors(element: TreeElement): { previous: TreeElement | null; next: TreeElement | null } {
+        const ret: { previous: TreeElement | null; next: TreeElement | null } = { previous: null, next: null };
+        let parent = element.parent;
+
+        if (!parent) {
+            parent = { ...element, type: NodeType.FILE, name: element.resource.toString() } as TreeElement;
+        }
+
+        //Jan2025 JSB Not too much my thing but this is a way to get the previous and next elements
+        //As long as it doesn't find the current element it will assign to the previous
+        //When it finds it, the next element skips the compare and is assigned to the next
+        const tags = this.getChildren(parent);
+        let gotElement = false;
+        const elementStr = JSON.stringify(element.location!);
+        for (const b of tags) {
+            if (!gotElement && JSON.stringify(b.location!) === elementStr) {
+                gotElement = true;
+                continue;
+            }
+
+            if (!gotElement) {
+                ret.previous = b;
+            } else {
+                ret.next = b;
+                break;
+            }
+        }
+
+        return ret;
+    }
 }
 
 
@@ -151,7 +244,7 @@ export class TagsTreeDataProvider implements vscode.TreeDataProvider<TreeElement
 
     constructor(controller: TagsController) {
         this._tagsController = controller;
-        this.model = new TagsDataModel(this._tagsController );
+        this.model = new TagsDataModel(this._tagsController);
         this._filterTreeViewWords = [];
         this._gitIgnoreHandler = undefined;
     }
@@ -272,23 +365,31 @@ export async function editorFindNearestTag(
         return null; // File not found
     }
 
-    const focusLine = anchor.line;
-
     // Strategy: nearest tag
     function strategyNearestTag(previous: TreeElement | null, current: TreeElement): TreeElement {
         if (!previous) return current;
-        return Math.abs(focusLine - current.location!.range.start.line) <=
-            Math.abs(focusLine - previous.location!.range.start.line)
-            ? current
-            : previous;
+        
+        const currentLineDiff = Math.abs(anchor.line - current.location!.range.start.line);
+        const previousLineDiff = Math.abs(anchor.line - previous.location!.range.start.line);
+    
+        if (currentLineDiff < previousLineDiff) {
+            return current;
+        } else if (currentLineDiff > previousLineDiff) {
+            return previous;
+        } else {
+            // Lines are the same, compare character positions
+            const currentCharDiff = Math.abs(anchor.character - current.location!.range.start.character);
+            const previousCharDiff = Math.abs(anchor.character  - previous.location!.range.start.character);
+            return currentCharDiff <= previousCharDiff ? current : previous;
+        }
     }
 
     // Strategy: previous tag (chapter style)
     function strategyLastKnownTag(previous: TreeElement | null, current: TreeElement): TreeElement {
         if (!previous) return current;
-        return focusLine >= current.location!.range.start.line &&
-            focusLine - current.location!.range.start.line <=
-            focusLine - previous.location!.range.start.line
+        return anchor.line >= current.location!.range.start.line &&
+            anchor.line - current.location!.range.start.line <=
+            anchor.line - previous.location!.range.start.line
             ? current
             : previous;
     }
@@ -362,8 +463,8 @@ export async function jumpToPrevious(treeView: vscode.TreeView<TreeElement>, tre
         return;
     }
 
-    //const neighbors = treeDataProvider.model.getNeighbors(element);
-    const neighbors = { previous: null, next: null }
+    const neighbors = treeDataProvider.model.getNeighbors(element);
+    //const neighbors = { previous: null, next: null }
     let target = neighbors.previous;
 
     if (
@@ -374,15 +475,13 @@ export async function jumpToPrevious(treeView: vscode.TreeView<TreeElement>, tre
         // Override to "element" except when the anchor is on the same line as the tag
         //target = element;
     }
-    /*
-        if (target && target.location) {
-            vscode.workspace.openTextDocument(target.location.uri).then((doc) => {
-                vscode.window.showTextDocument(doc).then((editor) => {
-                    editorJumptoRange(target.location!.range, editor);
-                });
+    if (target && target.location) {
+        vscode.workspace.openTextDocument(target.resource).then((doc) => {
+            vscode.window.showTextDocument(doc).then((editor) => {
+                editorJumptoRange(target.location!.range, editor);
             });
-        }
-    */
+        });
+    }
 }
 
 export async function jumpToNext(treeView: vscode.TreeView<TreeElement>, treeDataProvider: TagsTreeDataProvider): Promise<void> {
@@ -410,8 +509,7 @@ export async function jumpToNext(treeView: vscode.TreeView<TreeElement>, treeDat
         return;
     }
 
-    //const neighbors = treeDataProvider.model.getNeighbors(element);
-    const neighbors = { previous: null, next: null };
+    const neighbors = treeDataProvider.model.getNeighbors(element);
     let target = neighbors.next;
 
     if (
@@ -424,29 +522,15 @@ export async function jumpToNext(treeView: vscode.TreeView<TreeElement>, treeDat
         // except when the anchor is before the first tag
         target = element;
     }
-    /*
-        if (target && target.location) {
-            vscode.workspace.openTextDocument(target.location.uri).then((doc) => {
-                vscode.window.showTextDocument(doc).then((editor) => {
-                    editorJumptoRange(target.location!.range, editor);
-                });
-            });
-        }
-    */
-}
 
-export async function chooseGroupBy(treeDataProvider: TagsTreeDataProvider) {
-    // Show input dialog if no words are provided
-    const choices = [
-        'Tag',
-        'Category',
-        'Style',
-        'File'
-    ];
-    const selectedChoice = await vscode.window.showQuickPick(choices, {
-        placeHolder: 'Select a grouping method',
-        canPickMany: false
-    });
+    if (target && target.location) {
+        vscode.workspace.openTextDocument(target.resource).then((doc) => {
+            vscode.window.showTextDocument(doc).then((editor) => {
+                editorJumptoRange(target.location!.range, editor);
+            });
+        });
+    }
+
 }
 
 
@@ -464,7 +548,7 @@ export interface TreeElement {
     parent: TreeElement | null;
     iconPath: vscode.ThemeIcon | string | undefined;
     location?: Location | null;
-    label?: string;
+    label: string;
     category?: string;
     out: boolean;
     children?: TreeElement[];

@@ -108,7 +108,7 @@ export class ImagePanel {
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
         // get uris from out directory based on vscode.extensionUri
-        const webviewUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "image-view.js"]);
+        const webviewUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "image-webview.js"]);
         const nonce = getNonce();
         const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
         const logoMainPath = getAsWebviewUri(webview, extensionUri, ['out/media', 'chat-gpt-logo.jpeg']);

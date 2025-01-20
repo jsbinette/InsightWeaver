@@ -16,27 +16,12 @@ const extensionConfig = {
 };
 
 const webViewConfig = {
-    entryPoints: ['src/webviews/main-view.ts'],
-    bundle: true,
-    sourcemap: true,
-    format: 'iife',
-    platform: 'browser',
-    outdir: 'out/webviews',
-    tsconfig: 'tsconfig.json'
-};
-
-const imageViewConfig = {
-    entryPoints: ['src/webviews/image-view.ts'],
-    bundle: true,
-    sourcemap: true,
-    format: 'iife',
-    platform: 'browser',
-    outdir: 'out/webviews',
-    tsconfig: 'tsconfig.json'
-};
-
-const sideBarViewConfig = {
-    entryPoints: ['src/webviews/side-bar-view.ts'],
+    entryPoints: [
+        'src/webviews/image-webview.ts',
+        'src/webviews/main-webview.ts',
+        'src/webviews/sidebar-webview.ts',
+        'src/webviews/tree-webview.ts',
+    ],
     bundle: true,
     sourcemap: true,
     format: 'iife',
@@ -99,8 +84,6 @@ function copyStaticFiles() {
             await build({
                 ...extensionConfig,
                 ...webViewConfig,
-                ...imageViewConfig,
-                ...sideBarViewConfig,
                 ...treeDataViewConfig,
                 ...utilitiesConfig,
                 ...watchConfig,
@@ -109,8 +92,6 @@ function copyStaticFiles() {
         } else {
             await build(extensionConfig);
             await build(webViewConfig);
-            await build(imageViewConfig);
-            await build(sideBarViewConfig);
             await build(treeDataViewConfig)
             await build(utilitiesConfig);
             copyStaticFiles(); // Copy static files after building

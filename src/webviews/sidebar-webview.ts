@@ -1,4 +1,4 @@
-const vscode = acquireVsCodeApi();
+const sidebarVscode = acquireVsCodeApi();
 
 /**
  * Add load event.
@@ -52,7 +52,7 @@ function main() {
  */
 function handleStartButtonClick() {
     // Send messages to Panel.
-    vscode.postMessage({
+    sidebarVscode.postMessage({
         command: "start-chat-command",
         text: 'start-chat',
     });
@@ -63,7 +63,7 @@ function handleStartButtonClick() {
  */
 function handleImageButtonClick() {
     // Send messages to Panel.
-    vscode.postMessage({
+    sidebarVscode.postMessage({
         command: "image-buton-clicked-command",
         text: 'image-button',
     });
@@ -79,7 +79,7 @@ function handleSaveClick() {
         responseNumber: imageNumberTextField?.value,
         imageSize: imageSizeTextField?.value
     }
-    vscode.postMessage({
+    sidebarVscode.postMessage({
         command: "save-settings",
         data: data,
     });
