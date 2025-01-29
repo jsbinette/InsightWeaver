@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TagsDataModel, TreeElement } from '../webviews/tree-data-view';
+import { TreeDataModel, TreeElement } from '../utilities/treeDataModel';
 import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
 
 export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvider {
@@ -7,7 +7,7 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
     private _view?: vscode.WebviewView;
 
     constructor(private readonly _extensionUri: vscode.Uri,
-        private readonly dataModel: TagsDataModel) {
+        private readonly dataModel: TreeDataModel) {
 
     }
 
@@ -35,8 +35,9 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
         if (this._view) {
             const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "tree-webview.js"]);
             const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
-            const nonce = getNonce();
             const codiconsUri = getAsWebviewUri(webview, extensionUri, ['node_modules', '@vscode/codicons', 'dist', 'codicon.css']);
+            const nonce = getNonce();
+            //JSB here is the important part
             const rootElements = this.dataModel.getRoot();
             return `<!DOCTYPE html>
             <html>
@@ -50,9 +51,9 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
             </head>
             <body class="tree">
             <select id="groupByComboBox">
-                <option value="file">File</option>
-                <option value="style">Style</option>
-                <option value="tagName">Tag Name</option>
+            <option value="file" ${this.dataModel.groupBy === 'file' ? 'selected' : ''}>File</option>
+            <option value="style" ${this.dataModel.groupBy === 'style' ? 'selected' : ''}>Style</option>
+            <option value="tagName" ${this.dataModel.groupBy === 'tagName' ? 'selected' : ''}>Tag Name</option>
             </select>
             <ul class="tree">
                ${this.createListMarkup(rootElements)}

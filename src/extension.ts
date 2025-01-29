@@ -6,8 +6,9 @@ import { SideBarViewProvider } from './views/sidebar-view';
 import { InstructionTreeWebviewProvider } from './views/tree-view';
 import { getStoreData, getExtensionConfig } from './utilities/utility.service';
 import { registerContextMenuCommands } from './utilities/context-menu-command';
-import { TagsDataModel, TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange } from './webviews/tree-data-view';
+import { TagsTreeDataProvider, editorFindNearestTag, jumpToPrevious, jumpToNext, editorJumptoRange } from './webviews/tree-data-view';
 import { TagsController } from './utilities/tagsController';
+import { TreeDataModel } from './utilities/treeDataModel';
 import { Commands } from './utilities/commands';
 import { GitIgnore } from './utilities/gitignore';
 
@@ -17,7 +18,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const tagsController = new TagsController(context);
 	const commands = new Commands(tagsController)
 	const treeDataProvider = new TagsTreeDataProvider(tagsController);
-	const tagsDataModel = new TagsDataModel(tagsController);
+	const tagsDataModel = new TreeDataModel(tagsController);
 	const instructionTreeWebviewProvider = new InstructionTreeWebviewProvider(context.extensionUri, tagsDataModel)
 
 	// Chat panel register

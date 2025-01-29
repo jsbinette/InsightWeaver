@@ -422,19 +422,6 @@ export class TagsController {
 }
 
 
-
-interface FileDataEntry {
-    line: number;
-    startCharacter: number;
-    endCharacter: number;
-    tag: string;
-    tagText: string;
-}
-
-type TransformedData = {
-    [filePath: string]: FileDataEntry[];
-};
-
 export interface Location {
     range: vscode.Range;
     text: string;
