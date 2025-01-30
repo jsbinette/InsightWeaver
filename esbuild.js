@@ -30,17 +30,6 @@ const webViewConfig = {
     tsconfig: 'tsconfig.json'
 };
 
-const treeDataViewConfig = {
-    entryPoints: ['src/webviews/tree-data-view.ts'],
-    bundle: true,
-    sourcemap: true,
-    external: ['vscode'],
-    format: 'cjs',
-    platform: 'node',
-    outdir: 'out/webviews',
-    tsconfig: 'tsconfig.json'
-};
-
 const utilitiesConfig = {
     entryPoints: ['src/utilities/chat-gpt-api.service.ts','src/utilities/commands.ts', 'src/utilities/context-menu-command.ts', 'src/utilities/utility.service.ts','src/utilities/tagsController.ts','src/utilities/instructionsController.ts', 'src/utilities/gitignore.ts'],
     bundle: true,
@@ -84,7 +73,6 @@ function copyStaticFiles() {
             await build({
                 ...extensionConfig,
                 ...webViewConfig,
-                ...treeDataViewConfig,
                 ...utilitiesConfig,
                 ...watchConfig,
             });
@@ -92,7 +80,6 @@ function copyStaticFiles() {
         } else {
             await build(extensionConfig);
             await build(webViewConfig);
-            await build(treeDataViewConfig)
             await build(utilitiesConfig);
             copyStaticFiles(); // Copy static files after building
             console.log("build complete");

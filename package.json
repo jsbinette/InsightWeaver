@@ -57,10 +57,6 @@
       ],
       "explorer": [
         {
-          "id": "instructionsExplorer",
-          "name": "Instructions"
-        },
-        {
           "type": "webview",
           "id": "treeView",
           "name": "Tags"
@@ -145,6 +141,11 @@
         "category": "instructions"
       },
       {
+        "command": "instructions-manager.goToTag",
+        "title": "Go to Tag",
+        "category": "instructions"
+      },
+      {
         "command": "instructions-manager.showSelectVisibleTag",
         "title": "Select Visible Tag",
         "category": "instructions"
@@ -216,34 +217,9 @@
       ],
       "view/title": [
         {
-          "command": "instructions-manager.jumpToPrevious",
-          "when": "view == instructionsExplorer",
-          "group": "navigation@1"
-        },
-        {
-          "command": "instructions-manager.jumpToNext",
-          "when": "view == instructionsExplorer",
-          "group": "navigation@2"
-        },
-        {
           "command": "instructions-manager.chooseGroupBy",
           "when": "treeView",
           "group": "navigation@3"
-        },
-        {
-          "command": "instructions-manager.toggleShowVisibleFilesOnly",
-          "when": "view == instructionsExplorer",
-          "group": "navigation@4"
-        },
-        {
-          "command": "instructions-manager.refresh",
-          "when": "view == instructionsExplorer",
-          "group": "navigation@5"
-        },
-        {
-          "command": "instructions-manager.scanWorkspace",
-          "when": "view == instructionsExplorer",
-          "group": "navigation@6"
         }
       ]
     },

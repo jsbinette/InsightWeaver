@@ -10,7 +10,6 @@ function treeMain() {
         }
     });
 
-
     document.getElementById("groupByComboBox")?.addEventListener("change", (event) => {
         // Send messages to Vew.
         treeVscode.postMessage({
@@ -19,13 +18,6 @@ function treeMain() {
         });
     });
 
-
-
-    /**
-     * Create list markup.
-     * @param elements 
-     * @returns 
-     */
     document.querySelectorAll('.toggle').forEach(toggle => {
         toggle.addEventListener('click', () => {
             const parentLi = toggle.parentElement;
@@ -45,5 +37,26 @@ function treeMain() {
                 icon.classList.add('codicon-chevron-right');
             }
         });
+    });
+
+    document.querySelectorAll('.treeLabel').forEach(treeLabel => {
+        treeLabel.addEventListener('click', () => {
+            const id = treeLabel.id;
+            console.log("Label clicked:", id);
+            treeVscode.postMessage({
+                command: "goToTag",
+                args: [id], // Pass text as an argument
+            });
+        }
+        );
+    });
+
+    document.querySelectorAll('.treeCheckbox').forEach(treeCheckbox => {
+        treeCheckbox.addEventListener('click', () => {
+            const id = treeCheckbox.id;
+            console.log("treeCheckbox clicked:", id);
+            // Add your handling logic here
+        }
+        );
     });
 }

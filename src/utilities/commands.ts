@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TagsController } from './tagsController';
+import { TagsController, Location } from './tagsController';
 
 export class Commands {
     private _tagsController: TagsController;
@@ -19,6 +19,15 @@ export class Commands {
                 this._tagsController.updateTags(document);
             });
         });
+    }
+
+    goToTag(resource: vscode.Uri, location:Location): void {
+        
+        vscode.commands.executeCommand(
+            'instructions-manager.jumpToRange',
+            resource,
+            location.range
+        );
     }
 
     showSelectTag(filter?: (resource: string) => boolean, placeHolder?: string): void {
@@ -46,7 +55,7 @@ export class Commands {
             .then((item) => {
                 if (item && (item as any).target) {
                     vscode.commands.executeCommand(
-                        'instructions.jumpToRange',
+                        'instructions-manager.jumpToRange',
                         (item as any).target.uri,
                         (item as any).target.range
                     );

@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { getExtensionConfig } from './utility.service';
 import { TagsController, Tag, Location } from './tagsController';
 
@@ -20,14 +21,14 @@ export class TreeDataModel {
     }
 
     getRoot(): TreeElement[] {
-        let tagsGroupedByObj : {
+        let tagsGroupedByObj: {
             [key: string]: Tag[];
         }
         if (this.groupBy === 'file') {
             tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'resource', (uri) => uri.toString());
         } else if (this.groupBy === 'style') {
             tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'category');
-        } else if (this.groupBy === 'tagName'){
+        } else if (this.groupBy === 'tagName') {
             tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'tagName');
         } else { //default empty
             tagsGroupedByObj = {};
@@ -53,7 +54,7 @@ export class TreeDataModel {
             });
         }
 
-        let roots: TreeElement[] = []     
+        let roots: TreeElement[] = []
         Object.keys(tagsGroupedByObj).forEach((item) => {
             /*
             RIGHT NOW they are all equivalent but that will change
@@ -66,7 +67,9 @@ export class TreeDataModel {
                     name: item,
                     type: NodeType.FILE,
                     parent: null,
+                    location: tagsGroupedByObj[item][0].location,
                     out: false,
+                    id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource)),
                     children: getChildren(tagsGroupedByObj[item], this._tagsController),
                 })
             } else if (this.groupBy === 'style') {
@@ -77,7 +80,9 @@ export class TreeDataModel {
                     name: item,
                     type: NodeType.FILE,
                     parent: null,
+                    location: tagsGroupedByObj[item][0].location,
                     out: false,
+                    id: this._getIdRoot(tagsGroupedByObj[item][0].style),
                     children: getChildren(tagsGroupedByObj[item], this._tagsController),
                 });
             } else if (this.groupBy === 'tagName') {
@@ -88,13 +93,17 @@ export class TreeDataModel {
                     name: item,
                     type: NodeType.FILE,
                     parent: null,
+                    location: tagsGroupedByObj[item][0].location,
                     out: false,
+                    id: this._getIdRoot(tagsGroupedByObj[item][0].tagName),
                     children: getChildren(tagsGroupedByObj[item], this._tagsController),
                 });
             }
         });
 
-        function getChildren(tags: Tag[], _tagsController: TagsController ): TreeElement[] {
+        function getChildren(tags: Tag[], _tagsController: TagsController): TreeElement[] {
+            
+            
             return tags.map((tag: Tag) => {
                 return {
                     resource: tag.resource,
@@ -104,11 +113,12 @@ export class TreeDataModel {
                     type: NodeType.LOCATION,
                     parent: null,
                     out: false,
+                    id: crypto.createHash('sha1').update(JSON.stringify(tag.resource)+ JSON.stringify(tag.location)).digest('hex'),
                     iconPath: _tagsController.styles[tag.category]?.options?.gutterIconPath,
                 };
             });
         }
-        
+
 
         function sortRootsByLabels(roots: TreeElement[]): TreeElement[] {
             return roots.sort((a, b) => {
@@ -151,7 +161,7 @@ export class TreeDataModel {
     }
 
 
-    getChildren(element: TreeElement): TreeElement[] {
+    public getChildren(element: TreeElement): TreeElement[] {
         if (element.type === NodeType.FILE) {
             //NOT USED ANYMORE
             const extractTextAfterLastAtWord = (inputString: string): string => {
@@ -193,35 +203,8 @@ export class TreeDataModel {
         return element.children || [];
     }
 
-    getNeighbors(element: TreeElement): { previous: TreeElement | null; next: TreeElement | null } {
-        const ret: { previous: TreeElement | null; next: TreeElement | null } = { previous: null, next: null };
-        let parent = element.parent;
-
-        if (!parent) {
-            parent = { ...element, type: NodeType.FILE, name: element.resource.toString() } as TreeElement;
-        }
-
-        //Jan2025 JSB Not too much my thing but this is a way to get the previous and next elements
-        //As long as it doesn't find the current element it will assign to the previous
-        //When it finds it, the next element skips the compare and is assigned to the next
-        const tags = this.getChildren(parent);
-        let gotElement = false;
-        const elementStr = JSON.stringify(element.location!);
-        for (const b of tags) {
-            if (!gotElement && JSON.stringify(b.location!) === elementStr) {
-                gotElement = true;
-                continue;
-            }
-
-            if (!gotElement) {
-                ret.previous = b;
-            } else {
-                ret.next = b;
-                break;
-            }
-        }
-
-        return ret;
+    private _getIdRoot(o: string): string {
+        return crypto.createHash('sha1').update(o).digest('hex');
     }
 }
 
@@ -238,9 +221,10 @@ export interface TreeElement {
     type: NodeType;
     parent: TreeElement | null;
     iconPath: vscode.ThemeIcon | string | undefined;
-    location?: Location | null;
+    location: Location;
     label: string;
     category?: string;
     out: boolean;
+    id: string;
     children?: TreeElement[];
 }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getExtensionConfig } from '../utilities/utility.service';
 import { TreeDataModel, TreeElement } from '../utilities/treeDataModel';
 import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
 
@@ -72,8 +73,8 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
                 <li class="list-item ${el.out ? 'grayed-out' : ''}">
             ${el.children ? `<span class="toggle"><i class="codicon codicon-chevron-right"></i></span>` : ''}
             <label>
-                <input type="checkbox" ${el.out ? 'disabled' : ''}/> 
-                ${el.label}
+                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? 'disabled' : ''}/> 
+            <label id="${el.id}"  class="treeLabel">${el.label}</label>
             </label>
             ${el.children ? `<ul class="child-container">${this.createListMarkup(el.children)}</ul>` : ''}
         </li>`;
@@ -85,4 +86,30 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
             vscode.commands.executeCommand("instructions-manager." + message.command, ...(message.args || []));
         });
     }
+}
+
+/**
+ * Jumps to the specified range in a text editor.
+ * @param range The range to jump to.
+ * @param editor Optional editor to use, defaults to the active editor.
+ */
+export function editorJumptoRange(range: vscode.Range, editor?: vscode.TextEditor): void {
+    editor = editor || vscode.window.activeTextEditor; // Provided editor or fallback to active
+
+    if (!editor) return; // No active editor, nothing to do
+
+    let revealType = vscode.TextEditorRevealType.InCenter;
+    const selection = new vscode.Selection(
+        range.start.line,
+        range.start.character,
+        range.end.line,
+        range.end.character
+    );
+
+    if (range.start.line === editor.selection.active.line) {
+        revealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
+    }
+
+    editor.selection = selection;
+    editor.revealRange(selection, revealType);
 }
