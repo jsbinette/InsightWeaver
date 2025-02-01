@@ -10,6 +10,7 @@ import { TagsController, Tag, Location } from './tagsController';
 export class TreeDataModel {
     private _tagsController: TagsController;
     public groupBy: string;
+    public lastRoots: RootElement[] = [];
 
     constructor(controller: TagsController, groupBy: string = 'file') {
         this._tagsController = controller;
@@ -20,7 +21,7 @@ export class TreeDataModel {
         this.groupBy = groupBy;
     }
 
-    getRoot(): TreeElement[] {
+    getRoot(): RootElement[] {
         let tagsGroupedByObj: {
             [key: string]: Tag[];
         }
@@ -54,7 +55,7 @@ export class TreeDataModel {
             });
         }
 
-        let roots: TreeElement[] = []
+        let roots: RootElement[] = []
         Object.keys(tagsGroupedByObj).forEach((item) => {
             /*
             RIGHT NOW they are all equivalent but that will change
@@ -62,71 +63,47 @@ export class TreeDataModel {
             if (this.groupBy === 'file') {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
-                    iconPath: vscode.ThemeIcon.File,
                     label: path.basename(vscode.Uri.parse(item).fsPath),
-                    name: item,
-                    type: NodeType.FILE,
-                    parent: null,
-                    location: tagsGroupedByObj[item][0].location,
                     out: false,
                     id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource)),
-                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                    expanded: false,
+                    children: tagsGroupedByObj[item]
                 })
             } else if (this.groupBy === 'style') {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
-                    iconPath: this._tagsController.styles[item]?.options?.gutterIconPath,
                     label: item,
-                    name: item,
-                    type: NodeType.FILE,
-                    parent: null,
-                    location: tagsGroupedByObj[item][0].location,
                     out: false,
                     id: this._getIdRoot(tagsGroupedByObj[item][0].style),
-                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                    expanded: false,
+                    children: tagsGroupedByObj[item]
                 });
             } else if (this.groupBy === 'tagName') {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
-                    iconPath: vscode.ThemeIcon.File,
                     label: item,
-                    name: item,
-                    type: NodeType.FILE,
-                    parent: null,
-                    location: tagsGroupedByObj[item][0].location,
                     out: false,
-                    id: this._getIdRoot(tagsGroupedByObj[item][0].tagName),
-                    children: getChildren(tagsGroupedByObj[item], this._tagsController),
+                    id: this._getIdRoot(tagsGroupedByObj[item][0].style),
+                    expanded: false,
+                    children: tagsGroupedByObj[item]
                 });
             }
         });
 
-        function getChildren(tags: Tag[], _tagsController: TagsController): TreeElement[] {
-            
-            
-            return tags.map((tag: Tag) => {
-                return {
-                    resource: tag.resource,
-                    label: tag.label,
-                    name: tag.label.trim(),
-                    location: tag.location,
-                    type: NodeType.LOCATION,
-                    parent: null,
-                    out: false,
-                    id: crypto.createHash('sha1').update(JSON.stringify(tag.resource)+ JSON.stringify(tag.location)).digest('hex'),
-                    iconPath: _tagsController.styles[tag.category]?.options?.gutterIconPath,
-                };
-            });
-        }
+        roots.forEach((root) => {
+            const lastRoot = this.lastRoots.find((r) => r.id === root.id);
+            if (lastRoot) {
+                root.expanded = lastRoot.expanded;
+            }
+        });
 
-
-        function sortRootsByLabels(roots: TreeElement[]): TreeElement[] {
+        function sortRootsByLabels(roots: RootElement[]): RootElement[] {
             return roots.sort((a, b) => {
                 return a.label.localeCompare(b.label);
             });
         }
 
-        function sortChildrenByLocation(roots: TreeElement[]): TreeElement[] {
+        function sortChildrenByLocation(roots: RootElement[]): RootElement[] {
             roots.forEach(root => {
                 if (root.children) {
                     root.children = root.children.sort((a, b) => {
@@ -144,63 +121,8 @@ export class TreeDataModel {
             return roots;
         }
 
-        function assignParents(roots: TreeElement[]): TreeElement[] {
-            roots.forEach(root => {
-                if (root.children) {
-                    root.children.forEach(child => {
-                        child.parent = root;
-                    });
-                }
-            });
-            return roots;
-        }
-
-
-
-        return assignParents(sortChildrenByLocation(sortRootsByLabels(roots)));
-    }
-
-
-    public getChildren(element: TreeElement): TreeElement[] {
-        if (element.type === NodeType.FILE) {
-            //NOT USED ANYMORE
-            const extractTextAfterLastAtWord = (inputString: string): string => {
-                const zeroedRegex = /^@summarize\([^)]*\)\s*/;
-                const zeroedMatch = inputString.match(zeroedRegex);
-                if (zeroedMatch) {
-                    return zeroedMatch[0].trim();
-                }
-
-                const firstRegex = /@[\w-]+[^@]*$/;
-                const firstMatch = inputString.match(firstRegex);
-
-                if (firstMatch) {
-                    let remainingText = firstMatch[0];
-                    let secondRegex: RegExp;
-
-                    while (true) {
-                        if (remainingText.startsWith('@summarize(')) {
-                            secondRegex = /^@summarize\([^)]*\)\s*/;
-                        } else {
-                            secondRegex = /^@[\w-]+\s+/;
-                        }
-
-                        const secondMatch = remainingText.match(secondRegex);
-
-                        if (secondMatch) {
-                            remainingText = remainingText.substring(secondMatch[0].length);
-                        } else {
-                            break;
-                        }
-                    }
-
-                    return remainingText.trim();
-                }
-
-                return inputString.trim();
-            };
-        }
-        return element.children || [];
+        this.lastRoots = sortChildrenByLocation(sortRootsByLabels(roots));
+        return this.lastRoots;
     }
 
     private _getIdRoot(o: string): string {
@@ -208,23 +130,11 @@ export class TreeDataModel {
     }
 }
 
-
-export enum NodeType {
-    FILE = 1,
-    LOCATION = 2,
-}
-
-export interface TreeElement {
+export interface RootElement {
     resource: vscode.Uri;
-    tooltip?: string;
-    name: string;
-    type: NodeType;
-    parent: TreeElement | null;
-    iconPath: vscode.ThemeIcon | string | undefined;
-    location: Location;
     label: string;
-    category?: string;
     out: boolean;
     id: string;
-    children?: TreeElement[];
+    expanded: boolean;
+    children?: Tag[];
 }

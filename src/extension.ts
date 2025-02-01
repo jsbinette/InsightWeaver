@@ -89,12 +89,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.showSelectTag", () => {
-			commands.showSelectTag();
-		})
-	);
-
 	//JSB
 	context.subscriptions.push(
 		vscode.commands.registerCommand("instructions-manager.goToTag", (id:string) => {
@@ -115,20 +109,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.showSelectVisibleTag", () => {
-			commands.showSelectVisibleTag();
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.listTags", () => {
-			commands.showListTags();
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.listVisibleTags", () => {
-			commands.showListVisibleTags();
+		vscode.commands.registerCommand("instructions-manager.rootToggle", (id:string) => {
+			const tree = treeDataModel.lastRoots;
+			const element = tree.find((element) => element.id === id);
+			if (element) {
+				element.expanded = !element.expanded;
+			}
 		})
 	);
 

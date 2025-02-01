@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { getExtensionConfig } from '../utilities/utility.service';
-import { TreeDataModel, TreeElement } from '../utilities/treeDataModel';
 import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
+import { TreeDataModel, RootElement } from '../utilities/treeDataModel';
+import { Tag } from '../utilities/tagsController';
 
 export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewId = 'treeView';
@@ -11,7 +12,6 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
         private readonly dataModel: TreeDataModel) {
 
     }
-
 
     resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -57,7 +57,7 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
             <option value="tagName" ${this.dataModel.groupBy === 'tagName' ? 'selected' : ''}>Tag Name</option>
             </select>
             <ul class="tree">
-               ${this.createListMarkup(rootElements)}
+               ${this.createRootListMarkup(rootElements)}
             </ul>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
             </body></html>`;
@@ -67,16 +67,28 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
         }
     }
 
-    private createListMarkup(elements: TreeElement[]): string {
+    private createRootListMarkup(elements: RootElement[]): string {
         return elements.map(el => {
             return `
-                <li class="list-item ${el.out ? 'grayed-out' : ''}">
+                <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.expanded ? 'expanded' : ''}" id="${el.id}">
             ${el.children ? `<span class="toggle"><i class="codicon codicon-chevron-right"></i></span>` : ''}
             <label>
                 <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? 'disabled' : ''}/> 
             <label id="${el.id}"  class="treeLabel">${el.label}</label>
             </label>
-            ${el.children ? `<ul class="child-container">${this.createListMarkup(el.children)}</ul>` : ''}
+            ${el.children ? `<ul class="child-container">${this.createTagListMarkup(el.children)}</ul>` : ''}
+        </li>`;
+        }).join('');
+    }
+
+    private createTagListMarkup(elements: Tag[]): string {
+        return elements.map(el => {
+            return `
+                <li class="list-item ${el.out ? 'grayed-out' : ''}">
+            <label>
+                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? 'disabled' : ''}/> 
+            <label id="${el.id}"  class="treeLabel">${el.label}</label>
+            </label>
         </li>`;
         }).join('');
     }

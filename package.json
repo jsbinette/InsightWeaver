@@ -109,24 +109,6 @@
         "icon": "images/toggle-expanded.svg"
       },
       {
-        "command": "instructions-manager.jumpToPrevious",
-        "title": "Jump to Previous",
-        "category": "instructions",
-        "icon": {
-          "light": "images/jump-previous.svg",
-          "dark": "images/jump-previous-dark.svg"
-        }
-      },
-      {
-        "command": "instructions-manager.jumpToNext",
-        "title": "Jump to Next",
-        "category": "instructions",
-        "icon": {
-          "light": "images/jump-next.svg",
-          "dark": "images/jump-next-dark.svg"
-        }
-      },
-      {
         "command": "instructions-manager.chooseGroupBy",
         "title": "Choose how to group tags",
         "category": "instructions",
@@ -136,28 +118,13 @@
         }
       },
       {
-        "command": "instructions-manager.showSelectTag",
-        "title": "Select Tag",
-        "category": "instructions"
-      },
-      {
         "command": "instructions-manager.goToTag",
         "title": "Go to Tag",
         "category": "instructions"
       },
       {
-        "command": "instructions-manager.showSelectVisibleTag",
-        "title": "Select Visible Tag",
-        "category": "instructions"
-      },
-      {
-        "command": "instructions-manager.listTags",
-        "title": "List Tags",
-        "category": "instructions"
-      },
-      {
-        "command": "instructions-manager.listVisibleTags",
-        "title": "List Visible Tags",
+        "command": "instructions-manager.rootToggle",
+        "title": "Toogle Root Item",
         "category": "instructions"
       },
       {

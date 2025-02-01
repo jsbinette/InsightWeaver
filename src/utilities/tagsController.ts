@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { minimatch } from 'minimatch';
 import { getExtensionConfig } from './utility.service';
 import { InstructionsController } from './instructionsController';
@@ -209,6 +210,7 @@ export class TagsController {
             let textBeforeTagRange = new vscode.Range(document.positionAt(curTagLineStart), document.positionAt(curTagStart))
             let textAfterTagRange = new vscode.Range(document.positionAt(document.offsetAt(sortedLocations[i].range.end) + 1), document.positionAt(tagEnd))
             
+            let label = document.getText(new vscode.Range(sortedLocations[i].range.end, document.lineAt(sortedLocations[i].range.end.line).range.end))
             /*
              * HANDLING OF THE @out TAG
              * For instructions: Since the text of the tag before out will not be out, just skip the out tags in the getInstructions function.
@@ -226,10 +228,11 @@ export class TagsController {
                 style: style,
                 iconPath: this.styles[style]?.options.gutterIconPath || this.styles['default'].options.gutterIconPath,
                 location: sortedLocations[i],
-                label: document.getText(new vscode.Range(sortedLocations[i].range.end, document.lineAt(sortedLocations[i].range.end.line).range.end)),
+                label: label,
                 category: style,
                 tagName: sortedLocations[i].tagName,
                 out: false,
+                id: crypto.createHash('sha1').update(JSON.stringify(document.uri)+ JSON.stringify(label)).digest('hex'),
                 textBeforeTagRange: textBeforeTagRange,
                 textAfterTagRange: textAfterTagRange
             });
@@ -406,19 +409,6 @@ export class TagsController {
             return result;
         }, {} as { [key: string]: T[] });
     }
-
-    // Example usage:
-    /*
-    const groupedByStyle = groupBy(tags, 'style');
-    const groupedByCategory = groupBy(tags, 'category');
-    const groupedByResource = groupBy(tags, 'resource', (uri) => uri.toString());
-    const groupedByIconPath = groupBy(tags, 'iconPath', (iconPath) => typeof iconPath === 'string' ? iconPath : JSON.stringify(iconPath));
-    
-    console.log(groupedByStyle);
-    console.log(groupedByCategory);
-    console.log(groupedByResource);
-    console.log(groupedByIconPath);
-    */
 }
 
 
@@ -438,6 +428,7 @@ export interface Tag {
     category: string;
     tagName: string;
     out: boolean;
+    id: string;
     textBeforeTagRange: vscode.Range;
     textAfterTagRange: vscode.Range;
 }

@@ -29,6 +29,10 @@ function treeMain() {
             if (!icon) {
                 return;
             }
+            treeVscode.postMessage({
+                command: "rootToggle",
+                args: [parentLi.id], // Pass text as an argument
+            });
             if (parentLi.classList.contains('expanded')) {
                 icon.classList.remove('codicon-chevron-right');
                 icon.classList.add('codicon-chevron-down');
