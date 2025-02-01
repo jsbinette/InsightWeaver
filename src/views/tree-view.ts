@@ -73,7 +73,7 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
                 <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.expanded ? 'expanded' : ''}" id="${el.id}">
             ${el.children ? `<span class="toggle"><i class="codicon codicon-chevron-right"></i></span>` : ''}
             <label>
-                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? 'disabled' : ''}/> 
+                <input type="checkbox" id="${el.id}" class="rootCheckbox" ${el.out ? 'grayed-out' : ''}/> 
             <label id="${el.id}"  class="treeLabel">${el.label}</label>
             </label>
             ${el.children ? `<ul class="child-container">${this.createTagListMarkup(el.children)}</ul>` : ''}
@@ -86,7 +86,7 @@ export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvide
             return `
                 <li class="list-item ${el.out ? 'grayed-out' : ''}">
             <label>
-                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? 'disabled' : ''}/> 
+                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? '' : 'checked'}/> 
             <label id="${el.id}"  class="treeLabel">${el.label}</label>
             </label>
         </li>`;

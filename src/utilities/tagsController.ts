@@ -13,7 +13,36 @@ export class TagsController {
     private _context: vscode.ExtensionContext;
     public styles: Record<string, any>;
     public words: Record<string, string[]>;
-    public tags: Tag[];
+    //The private tags are used by TagsContoller to decorate and update tags
+    private _tags: Tag[];
+    //The public tags are used by the webview to display the tags
+    get tags(): Tag[] {
+        //filter tags to find tagName = @out-file
+        const outFileTags = this._tags.filter(tag => tag.tagName === '@out-file');
+        //From all the tags, set the outFile property to true for all the tags that have the same resource as the @out-file tag
+        this._tags.forEach(tag => tag.outFile = outFileTags.some(outTag => outTag.resource === tag.resource));
+        //same thing for @out-style and @out-tagName
+        const outStyleTags = this._tags.filter(tag => tag.tagName === '@out-style');
+        this._tags.forEach(tag => tag.outStyle = outStyleTags.some(outTag => outTag.style === tag.style));
+        const outTagNameTags = this._tags.filter(tag => tag.tagName === '@out-tagName');
+        this._tags.forEach(tag => tag.outTagName = outTagNameTags.some(outTag => outTag.tagName === tag.tagName));
+
+        //for any @out tag, set the out property of the preceding tag out property to true
+        for (let i = 0; i < this._tags.length; i++) {
+            if (this._tags[i].tagName === '@out') {
+                //filter the tags by ressource and order by location.range.start
+                let tags = this._tags.filter(tag => tag.resource === this._tags[i].resource).sort((a, b) => a.location.range.start.compareTo(b.location.range.start));
+                //find the index of the current tag
+                let index = tags.indexOf(this._tags[i]);
+                //if the index is not the first one, set the out property of the preceding tag to true
+                if (index > 0) {
+                    tags[index - 1].out = true;
+                }
+            }
+        }
+        //return the tags filtered from the @out tags
+        return this._tags.filter(tag => tag.tagName !== '@out');
+    }
 
     public includePattern: string;
     public excludePattern: string;
@@ -24,7 +53,7 @@ export class TagsController {
         this.styles = this._reLoadDecorations();
         this.words = this._reLoadWords();
 
-        this.tags = [];
+        this._tags = [];
 
         const arrayToSearchGlobPattern = (config: string | string[]): string => {
             return Array.isArray(config)
@@ -162,14 +191,10 @@ export class TagsController {
 
     private _clearTagsOfFile(document: vscode.TextDocument): void {
         const ressource = document.uri;
-        this.tags = this.tags.filter((tag) => tag.resource !== ressource);
+        this._tags = this._tags.filter((tag) => tag.resource !== ressource);
     }
 
-    private _addTags(
-        document: vscode.TextDocument,
-        style: string,
-        locations: Location[]
-    ): void {
+    private _addTags(document: vscode.TextDocument, style: string, locations: Location[]): void {
         let sortedLocations: Location[];
         function sortLocationsByRange(locations: Location[]): Location[] {
             return locations.sort((a, b) => {
@@ -209,7 +234,7 @@ export class TagsController {
             //will eventually need to handle the case where the tag is the last thing in the file
             let textBeforeTagRange = new vscode.Range(document.positionAt(curTagLineStart), document.positionAt(curTagStart))
             let textAfterTagRange = new vscode.Range(document.positionAt(document.offsetAt(sortedLocations[i].range.end) + 1), document.positionAt(tagEnd))
-            
+
             let label = document.getText(new vscode.Range(sortedLocations[i].range.end, document.lineAt(sortedLocations[i].range.end.line).range.end))
             /*
              * HANDLING OF THE @out TAG
@@ -222,7 +247,7 @@ export class TagsController {
              * I think we could output this @out-file tag with the command; and should we have it available for all files?
              */
 
-            this.tags.push({
+            this._tags.push({
                 resource: document.uri,
                 tooltip: sortedLocations[i].text,
                 style: style,
@@ -232,7 +257,10 @@ export class TagsController {
                 category: style,
                 tagName: sortedLocations[i].tagName,
                 out: false,
-                id: crypto.createHash('sha1').update(JSON.stringify(document.uri)+ JSON.stringify(label)).digest('hex'),
+                outFile: false,
+                outStyle: false,
+                outTagName: false,
+                id: crypto.createHash('sha1').update(JSON.stringify(document.uri) + JSON.stringify(label)).digest('hex'),
                 textBeforeTagRange: textBeforeTagRange,
                 textAfterTagRange: textAfterTagRange
             });
@@ -361,7 +389,7 @@ export class TagsController {
                 if (!fs.existsSync(workspaceFolder + '/.instructions')) {
                     fs.mkdirSync(workspaceFolder + '/.instructions');
                 }
-                fs.writeFile(workspaceFolder + '/.instructions/tags.json', JSON.stringify(this.tags), (err) => {
+                fs.writeFile(workspaceFolder + '/.instructions/tags.json', JSON.stringify(this._tags), (err) => {
                     if (err) {
                         console.error(err);
                         return;
@@ -377,7 +405,7 @@ export class TagsController {
                 });
             }
         } else if (getExtensionConfig().view.files.workspace) {
-            this._context.workspaceState.update("tags.object", JSON.stringify(this.tags));
+            this._context.workspaceState.update("tags.object", JSON.stringify(this._tags));
         }
     }
 
@@ -390,13 +418,13 @@ export class TagsController {
         if (!this._isWorkspaceAvailable()) return; //cannot load
         if (getExtensionConfig().view.files.inFiles) {
             const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'tags.json');
-            this.tags = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            this._tags = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } else if (getExtensionConfig().view.files.workspace) {
-            this.tags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
-        } //else this.tags == {} no arms done
+            this._tags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
+        } //else this._tags == {} no arms done
 
         //remove all non existing files
-        this.tags = this.tags.filter((tag) => fs.existsSync(tag.resource.fsPath));
+        this._tags = this._tags.filter((tag) => fs.existsSync(tag.resource.fsPath));
     }
 
     public groupBy<T>(array: T[], key: keyof T, keyToString: (keyValue: any) => string = String): { [key: string]: T[] } {
@@ -408,6 +436,86 @@ export class TagsController {
             result[groupKey].push(currentValue);
             return result;
         }, {} as { [key: string]: T[] });
+    }
+
+    //remove an @out word in the file that fallows immediately the range of the tag passed as argument using the tag.ressource url and tag.location.range
+    public async removeOutTag(tag: Tag) {
+        let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === tag.resource.toString());
+        if (!document) return;
+        let text = document.getText();
+        let tagStart = document.offsetAt(tag.location.range.start);
+        if (tagStart !== -1) {
+            //find the next @out tag
+            let outStart = text.indexOf('@out', tagStart);
+            if (outStart === -1) return;
+            let outEnd = outStart + 4 + 1;
+            let range = new vscode.Range(document.positionAt(outStart), document.positionAt(outEnd));
+            let edit = new vscode.WorkspaceEdit();
+            edit.delete(document.uri, range);
+            await vscode.workspace.applyEdit(edit);
+            await document.save();
+            //onDidChange will be called after the edit is applied because 
+            //the onDidChangeTextDocument event will be triggered BUT
+            //the active editor is not the document but the webview
+        }
+    }
+
+    public async addOutTag(tag: Tag) {
+        let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === tag.resource.toString());
+        if (!document) return;
+        let text = document.getText();
+        let outTagStart = document.offsetAt(tag.location.range.end);
+        if (outTagStart !== -1) {
+            let edit = new vscode.WorkspaceEdit();
+            edit.insert(document.uri, document.positionAt(outTagStart), ' @out');
+            await vscode.workspace.applyEdit(edit);
+            await document.save();
+            //onDidChange will be called after the edit is applied because 
+            //the onDidChangeTextDocument event will be triggered BUT
+            //the active editor is not the document but the webview
+        }
+    }
+
+    public async removeOutFileTag(resource: vscode.Uri) {
+        let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === resource.toString());
+        if (!document) return;
+        let text = document.getText();
+        let outTagStart = text.indexOf('@out-file');
+        if (outTagStart !== -1) {
+            let outTagEnd = outTagStart + 9;
+            let range = new vscode.Range(document.positionAt(outTagStart), document.positionAt(outTagEnd + 1));
+            let edit = new vscode.WorkspaceEdit();
+            edit.delete(document.uri, range);
+            await vscode.workspace.applyEdit(edit);
+            await document.save();
+            //onDidChange will be called after the edit is applied because 
+            //the onDidChangeTextDocument event will be triggered BUT
+            //the active editor is not the document but the webview
+        }
+    }
+
+    public async addOutFileTag(resource: vscode.Uri) {
+        let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === resource.toString());
+        if (!document) return;
+        let text = document.getText();
+        let outTagStart = text.indexOf('@out-file');
+        if (outTagStart === -1) {
+            //use _tags to find the first tag in the file
+            let tags = this._tags.filter(tag => tag.resource === resource);
+            let firstTag = tags.sort((a, b) => a.location.range.start.compareTo(b.location.range.start))[0];
+            let edit = new vscode.WorkspaceEdit();
+            edit.insert(document.uri, firstTag.location.range.end, ' @out-file');
+            await vscode.workspace.applyEdit(edit);
+            await document.save();
+            
+
+
+
+
+            //onDidChange will be called after the edit is applied because 
+            //the onDidChangeTextDocument event will be triggered BUT
+            //the active editor is not the document but the webview
+        }
     }
 }
 
@@ -428,6 +536,9 @@ export interface Tag {
     category: string;
     tagName: string;
     out: boolean;
+    outFile: boolean;
+    outStyle: boolean;
+    outTagName: boolean;
     id: string;
     textBeforeTagRange: vscode.Range;
     textAfterTagRange: vscode.Range;

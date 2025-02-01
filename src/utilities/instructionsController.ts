@@ -37,14 +37,9 @@ export class InstructionsController {
             //filter tags to find tagName = @out-file
             const outFileTags = allTags.filter(tag => tag.tagName === '@out-file');
             //filter out of outTags all the tags that have resourse (URI) that are present in outFileTags
-            const instructionsTags = allTags.filter(tag => !outFileTags.some(outTag => outTag.resource === tag.resource));
-            //for any @out tag, set the out property of the preceding tag and remove this tag
-            for (let i = 0; i < instructionsTags.length; i++) {
-                if (instructionsTags[i].tagName === '@out') {
-                    instructionsTags[i - 1].out = true;
-                    instructionsTags.splice(i, 1);
-                }
-            }
+            let instructionsTags = allTags.filter(tag => !outFileTags.some(outTag => outTag.resource === tag.resource));
+            //filter out of instructionsTags all the tags that have out = true
+            instructionsTags = instructionsTags.filter(tag => !tag.out);
 
             //summary tags should be handled here later
 

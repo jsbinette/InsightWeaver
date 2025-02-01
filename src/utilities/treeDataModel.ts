@@ -64,7 +64,7 @@ export class TreeDataModel {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
                     label: path.basename(vscode.Uri.parse(item).fsPath),
-                    out: false,
+                    out: tagsGroupedByObj[item][0].outFile,
                     id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource)),
                     expanded: false,
                     children: tagsGroupedByObj[item]
@@ -73,7 +73,7 @@ export class TreeDataModel {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
                     label: item,
-                    out: false,
+                    out: tagsGroupedByObj[item][0].outStyle,
                     id: this._getIdRoot(tagsGroupedByObj[item][0].style),
                     expanded: false,
                     children: tagsGroupedByObj[item]
@@ -82,7 +82,7 @@ export class TreeDataModel {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
                     label: item,
-                    out: false,
+                    out: tagsGroupedByObj[item][0].outTagName,
                     id: this._getIdRoot(tagsGroupedByObj[item][0].style),
                     expanded: false,
                     children: tagsGroupedByObj[item]
@@ -133,7 +133,7 @@ export class TreeDataModel {
 export interface RootElement {
     resource: vscode.Uri;
     label: string;
-    out: boolean;
+    out: boolean; //could be file, style, tagName
     id: string;
     expanded: boolean;
     children?: Tag[];

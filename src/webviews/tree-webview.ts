@@ -43,10 +43,20 @@ function treeMain() {
         });
     });
 
+    document.querySelectorAll('.rootCheckbox').forEach(rootCheckbox => {
+        rootCheckbox.addEventListener('click', () => {
+            const id = rootCheckbox.id;
+            treeVscode.postMessage({
+                command: "outGroupToggle",
+                args: [id],
+            });
+        }
+        );
+    });
+
     document.querySelectorAll('.treeLabel').forEach(treeLabel => {
         treeLabel.addEventListener('click', () => {
             const id = treeLabel.id;
-            console.log("Label clicked:", id);
             treeVscode.postMessage({
                 command: "goToTag",
                 args: [id], // Pass text as an argument
@@ -58,8 +68,10 @@ function treeMain() {
     document.querySelectorAll('.treeCheckbox').forEach(treeCheckbox => {
         treeCheckbox.addEventListener('click', () => {
             const id = treeCheckbox.id;
-            console.log("treeCheckbox clicked:", id);
-            // Add your handling logic here
+            treeVscode.postMessage({
+                command: "outToggle",
+                args: [id],
+            });
         }
         );
     });

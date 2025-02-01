@@ -131,39 +131,90 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		vscode.commands.registerCommand("instructions-manager.outGroupToggle", async (id: string) => {
+			const tree = treeDataModel.lastRoots;
+			const element = tree.find((element) => element.id === id);
+			if (element) {
+				if (treeDataModel.groupBy === 'file') {
+					if (element.out) {
+						await tagsController.removeOutFileTag(element.resource);
+					} else { 
+						await tagsController.addOutFileTag(element.resource);
+					}
+					if (getExtensionConfig().enable) {
+						let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource.toString());
+						if (document) {
+							await tagsController.updateTags(document);
+							instructionTreeWebviewProvider.refresh();
+							const openEditor = vscode.window.visibleTextEditors.find(
+								(editor) => editor.document.uri.toString() === document.uri.toString()
+							);
+							if (openEditor) {
+								await tagsController.decorate(openEditor);
+							}
+						}
+					}
+				}
+			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("instructions-manager.outToggle", async (id: string) => {
+			const tags = tagsController.tags;
+			const element = tags.find((element) => element.id === id);
+			if (element) {
+				if (element.out) {
+					//Need to remove the @out tag that fallows the tag in the file
+					await tagsController.removeOutTag(element);
+				} else {
+					await tagsController.addOutTag(element);
+				}
+				if (getExtensionConfig().enable) {
+					let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource.toString());
+					if (document) {
+						await tagsController.updateTags(document);
+						instructionTreeWebviewProvider.refresh();
+					}
+				}
+			}
+		})
+	);
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand("instructions-manager.scanWorkspace", () => {
-					vscode.workspace
-						.findFiles(tagsController.includePattern, tagsController.excludePattern, tagsController.maxFilesLimit)
-						.then(
-							(files) => {
-								if (!files || files.length === 0) {
-									console.log('No files found');
-									return;
-								}
-			
-								function isTextFile(filePath: string): boolean {
-									const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
-									const textChars = buffer.toString('utf8').split('').filter(char => {
-										const code = char.charCodeAt(0);
-										return (code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13;
-									});
-			
-									return textChars.length / buffer.length > 0.9; // Adjust the threshold as needed
-								}
-			
-								files.forEach((file) => {
-									if (isTextFile(file.fsPath)) {
-										vscode.workspace.openTextDocument(file).then(
-											(document) => {
-												tagsController.updateTags(document);
-											},
-											(err) => console.error(err)
-										);
-									}
-								});
-							},
-							(err) => console.error(err)
-						);
+			vscode.workspace
+				.findFiles(tagsController.includePattern, tagsController.excludePattern, tagsController.maxFilesLimit)
+				.then(
+					(files) => {
+						if (!files || files.length === 0) {
+							console.log('No files found');
+							return;
+						}
+
+						function isTextFile(filePath: string): boolean {
+							const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
+							const textChars = buffer.toString('utf8').split('').filter(char => {
+								const code = char.charCodeAt(0);
+								return (code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13;
+							});
+
+							return textChars.length / buffer.length > 0.9; // Adjust the threshold as needed
+						}
+
+						files.forEach((file) => {
+							if (isTextFile(file.fsPath)) {
+								vscode.workspace.openTextDocument(file).then(
+									(document) => {
+										tagsController.updateTags(document);
+									},
+									(err) => console.error(err)
+								);
+							}
+						});
+					},
+					(err) => console.error(err)
+				);
 		})
 	);
 
