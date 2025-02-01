@@ -1,5 +1,7 @@
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+
 import { ImagePanel } from './panels/image-panel';
 import { ChatGptPanel } from './panels/main-panel';
 import { SideBarViewProvider } from './views/sidebar-view';
@@ -8,14 +10,12 @@ import { getStoreData, getExtensionConfig } from './utilities/utility.service';
 import { registerContextMenuCommands } from './utilities/context-menu-command';
 import { TagsController } from './utilities/tagsController';
 import { TreeDataModel } from './utilities/treeDataModel';
-import { Commands } from './utilities/commands';
 import { GitIgnore } from './utilities/gitignore';
 
 
 export async function activate(context: vscode.ExtensionContext) {
 
 	const tagsController = new TagsController(context);
-	const commands = new Commands(tagsController)
 	const treeDataModel = new TreeDataModel(tagsController);
 	const instructionTreeWebviewProvider = new InstructionTreeWebviewProvider(context.extensionUri, treeDataModel)
 
@@ -38,6 +38,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(SideBarViewProvider.viewType, provider, { webviewOptions: { retainContextWhenHidden: true } })
 	);
 
+	function refreshAllTags(): void {
+		Object.keys(tagsController.tags).forEach((uri) => {
+			vscode.workspace.openTextDocument(vscode.Uri.parse(uri)).then((document) => {
+				tagsController.updateTags(document);
+			});
+		});
+	}
+
 	// Context Menu Commands
 	const storeData = getStoreData(context);
 	registerContextMenuCommands(storeData.apiKey);
@@ -56,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('instructions-manager.refresh', () => {
-			commands.refresh();
+			refreshAllTags();
 			instructionTreeWebviewProvider.refresh();
 		})
 	);
@@ -67,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				'view.showVisibleFilesOnly',
 				!getExtensionConfig().view.showVisibleFilesOnly
 			);
-			commands.refresh();
+			refreshAllTags();
 			instructionTreeWebviewProvider.refresh();
 		})
 	);
@@ -75,7 +83,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", (selectedChoice: string) => {
 			treeDataModel.changeGoupBy(selectedChoice);
-			commands.refresh();
+			refreshAllTags();
 			//treeDataProvider.refresh();
 			instructionTreeWebviewProvider.refresh();
 		})
@@ -91,7 +99,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	//JSB
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.goToTag", (id:string) => {
+		vscode.commands.registerCommand("instructions-manager.goToTag", (id: string) => {
 			const tree = treeDataModel.getRoot();
 			const element = tree.find((element) => element.id === id);
 			if (element) { //we have a root; we do nothing
@@ -100,7 +108,11 @@ export async function activate(context: vscode.ExtensionContext) {
 					if (element.children) {
 						const child = element.children.find((child) => child.id === id);
 						if (child) {
-							commands.goToTag(child.resource, child.location);
+							vscode.commands.executeCommand(
+								'instructions-manager.jumpToRange',
+								child.resource,
+								child.location.range
+							);
 						}
 					}
 				});
@@ -109,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.rootToggle", (id:string) => {
+		vscode.commands.registerCommand("instructions-manager.rootToggle", (id: string) => {
 			const tree = treeDataModel.lastRoots;
 			const element = tree.find((element) => element.id === id);
 			if (element) {
@@ -120,7 +132,38 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("instructions-manager.scanWorkspace", () => {
-			commands.scanWorkspaceTags();
+					vscode.workspace
+						.findFiles(tagsController.includePattern, tagsController.excludePattern, tagsController.maxFilesLimit)
+						.then(
+							(files) => {
+								if (!files || files.length === 0) {
+									console.log('No files found');
+									return;
+								}
+			
+								function isTextFile(filePath: string): boolean {
+									const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
+									const textChars = buffer.toString('utf8').split('').filter(char => {
+										const code = char.charCodeAt(0);
+										return (code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13;
+									});
+			
+									return textChars.length / buffer.length > 0.9; // Adjust the threshold as needed
+								}
+			
+								files.forEach((file) => {
+									if (isTextFile(file.fsPath)) {
+										vscode.workspace.openTextDocument(file).then(
+											(document) => {
+												tagsController.updateTags(document);
+											},
+											(err) => console.error(err)
+										);
+									}
+								});
+							},
+							(err) => console.error(err)
+						);
 		})
 	);
 
@@ -129,7 +172,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	/** Module Initialization */
-	commands.refresh();
+	refreshAllTags();
 	instructionTreeWebviewProvider.refresh();
 	onDidChange();
 
