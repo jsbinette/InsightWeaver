@@ -9,12 +9,15 @@ import { TagsController, Tag, Location } from './tagsController';
 
 export class TreeDataModel {
     private _tagsController: TagsController;
+    private _context: vscode.ExtensionContext;
     public groupBy: string;
     public lastRoots: RootElement[] = [];
 
-    constructor(controller: TagsController, groupBy: string = 'file') {
+    constructor(controller: TagsController, context: vscode.ExtensionContext) {
         this._tagsController = controller;
-        this.groupBy = groupBy;
+        this._context = context;
+        this.groupBy = 'file';
+        this.loadFromWorkspace();
     }
 
     public changeGoupBy(groupBy: string) {
@@ -65,7 +68,7 @@ export class TreeDataModel {
                     resource: tagsGroupedByObj[item][0].resource,
                     label: path.basename(vscode.Uri.parse(item).fsPath),
                     out: tagsGroupedByObj[item][0].outFile,
-                    id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource)),
+                    id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource.fsPath)),
                     expanded: false,
                     children: tagsGroupedByObj[item]
                 })
@@ -83,7 +86,7 @@ export class TreeDataModel {
                     resource: tagsGroupedByObj[item][0].resource,
                     label: item,
                     out: tagsGroupedByObj[item][0].outTagName,
-                    id: this._getIdRoot(tagsGroupedByObj[item][0].style),
+                    id: this._getIdRoot(tagsGroupedByObj[item][0].tagName),
                     expanded: false,
                     children: tagsGroupedByObj[item]
                 });
@@ -122,19 +125,64 @@ export class TreeDataModel {
         }
 
         this.lastRoots = sortChildrenByLocation(sortRootsByLabels(roots));
+        this.saveToWorkspace();
         return this.lastRoots;
     }
 
     private _getIdRoot(o: string): string {
         return crypto.createHash('sha1').update(o).digest('hex');
     }
+
+    private _isWorkspaceAvailable() {
+        //single or multi root
+        return vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length >= 1;
+    }
+
+    public loadFromWorkspace(): void {
+        if (!this._isWorkspaceAvailable()) return; //cannot load
+        if (getExtensionConfig().view.files.inFiles) {
+            return; //no support
+        } else if (getExtensionConfig().view.files.workspace) {
+            let obj = JSON.parse(this._context.workspaceState.get("treeData.object", "{}"));
+            if (Object.keys(obj).length === 0) {
+                return;
+            }
+            this.groupBy = obj.groupBy;
+            this.lastRoots = obj.lastMiniRoots;
+        }
+    }
+
+    public saveToWorkspace(): void {
+        if (!this._isWorkspaceAvailable()) return; //cannot save
+        if (getExtensionConfig().view.files.inFiles) {
+            return; //no support
+        } else if (getExtensionConfig().view.files.workspace) {
+            let lastMiniRoots: RootElement[] = this.lastRoots.map((root) => {
+                return {
+                    label: root.label,
+                    out: root.out,
+                    id: root.id,
+                    expanded: root.expanded
+                }
+            });
+            this._context.workspaceState.update("treeData.object", JSON.stringify({
+                groupBy: this.groupBy,
+                lastMiniRoots: lastMiniRoots
+            }));
+        }
+    }
+
+    public resetWorkspace(): void {
+        this._context.workspaceState.update("treeData.object", "{}");
+    }
 }
 
 export interface RootElement {
-    resource: vscode.Uri;
+    resource?: vscode.Uri; //made this optional for serializing
     label: string;
     out: boolean; //could be file, style, tagName
     id: string;
     expanded: boolean;
     children?: Tag[];
 }
+

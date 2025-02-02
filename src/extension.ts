@@ -16,7 +16,7 @@ import { GitIgnore } from './utilities/gitignore';
 export async function activate(context: vscode.ExtensionContext) {
 
 	const tagsController = new TagsController(context);
-	const treeDataModel = new TreeDataModel(tagsController);
+	const treeDataModel = new TreeDataModel(tagsController, context);
 	const instructionTreeWebviewProvider = new InstructionTreeWebviewProvider(context.extensionUri, treeDataModel)
 
 	// Chat panel register
@@ -92,7 +92,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("instructions-manager.debug.state.reset", () => {
 			tagsController.resetWorkspace();
+			treeDataModel.resetWorkspace();
 			tagsController.loadFromWorkspace();
+			treeDataModel.loadFromWorkspace();
 			instructionTreeWebviewProvider.refresh();
 		})
 	);
@@ -126,6 +128,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const element = tree.find((element) => element.id === id);
 			if (element) {
 				element.expanded = !element.expanded;
+				treeDataModel.saveToWorkspace();
 			}
 		})
 	);
@@ -142,7 +145,7 @@ export async function activate(context: vscode.ExtensionContext) {
 						await tagsController.addOutFileTag(element.resource);
 					}
 					if (getExtensionConfig().enable) {
-						let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource.toString());
+						let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource?.toString());
 						if (document) {
 							await tagsController.updateTags(document);
 							instructionTreeWebviewProvider.refresh();
@@ -245,7 +248,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	/***** OnSave */
 	vscode.workspace.onDidSaveTextDocument((document) => {
 		if (vscode.window.activeTextEditor) {
-			onDidSave(vscode.window.activeTextEditor);
+			//onDidChange runs concurrently with onDidSave so no need
+			//onDidSave(vscode.window.activeTextEditor);
 		}
 	}, null, context.subscriptions);
 

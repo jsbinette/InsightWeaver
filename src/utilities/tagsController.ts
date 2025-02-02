@@ -190,8 +190,8 @@ export class TagsController {
     }
 
     private _clearTagsOfFile(document: vscode.TextDocument): void {
-        const ressource = document.uri;
-        this._tags = this._tags.filter((tag) => tag.resource !== ressource);
+        const resource = document.uri;
+        this._tags = this._tags.filter((tag) => tag.resource.fsPath != resource.fsPath);
     }
 
     private _addTags(document: vscode.TextDocument, style: string, locations: Location[]): void {
@@ -362,12 +362,13 @@ export class TagsController {
     /// This function is called only by vscode settings click and it will remove
     public resetWorkspace() {
         if (!this._isWorkspaceAvailable()) return; //cannot save
-        this._context.workspaceState.update("tags.object", "{}");
+        this._context.workspaceState.update("tags.array", "[]");
         let workspaceFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-        fs.unlinkSync(workspaceFolder + '/.instructions/instructions-processed.md')
-        fs.unlinkSync(workspaceFolder + '/.instructions/instructions.md')
-        fs.unlinkSync(workspaceFolder + '/.instructions/tags.json')
-
+        if (workspaceFolder) {
+            if (fs.existsSync(workspaceFolder + '/.instructions')) {
+                fs.rmdirSync(workspaceFolder + '/.instructions', { recursive: true });
+            }
+        }
     }
 
 
@@ -405,7 +406,13 @@ export class TagsController {
                 });
             }
         } else if (getExtensionConfig().view.files.workspace) {
-            this._context.workspaceState.update("tags.object", JSON.stringify(this._tags));
+            function serializeWithUri(obj: any): string {
+                return JSON.stringify(obj, (key, value) => {
+                    let a =  key == 'resource' ? value.path : value;
+                    return a;
+                });
+            }
+            this._context.workspaceState.update("tags.array", serializeWithUri(this._tags));
         }
     }
 
@@ -420,7 +427,18 @@ export class TagsController {
             const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'tags.json');
             this._tags = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } else if (getExtensionConfig().view.files.workspace) {
-            this._tags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
+            function deserializeWithUri(json: string): any {
+                return JSON.parse(json, (key, value) => {
+                    let a = value;
+                    if (key == 'resource') {
+                        a = vscode.Uri.parse(value);
+                    } else if (key == 'range') {
+                        a = new vscode.Range(value[0].line, value[0].character, value[1].line, value[1].character);
+                    }
+                    return a;
+                });
+            }
+            this._tags = deserializeWithUri(this._context.workspaceState.get("tags.array", "[]"));
         } //else this._tags == {} no arms done
 
         //remove all non existing files
@@ -476,7 +494,8 @@ export class TagsController {
         }
     }
 
-    public async removeOutFileTag(resource: vscode.Uri) {
+    public async removeOutFileTag(resource?: vscode.Uri) {
+        if (!resource) return;
         let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === resource.toString());
         if (!document) return;
         let text = document.getText();
@@ -494,7 +513,8 @@ export class TagsController {
         }
     }
 
-    public async addOutFileTag(resource: vscode.Uri) {
+    public async addOutFileTag(resource?: vscode.Uri) {
+        if (!resource) return;
         let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === resource.toString());
         if (!document) return;
         let text = document.getText();
