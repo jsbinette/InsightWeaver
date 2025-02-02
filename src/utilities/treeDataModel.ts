@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { getExtensionConfig } from './utility.service';
 import { TagsController, Tag, Location } from './tagsController';
+import { get } from 'http';
 
 
 export class TreeDataModel {
@@ -25,51 +26,48 @@ export class TreeDataModel {
     }
 
     getRoot(): RootElement[] {
+        let tagsConsidered = this._tagsController.tags;
+
+        //filter tags if showFilesMode not wholeWorkspace
+        let visibleEditorUris: string[];
+        if (getExtensionConfig().view.showFilesMode !== 'wholeWorkspace') {
+            // do nothing here
+            if (getExtensionConfig().view.showFilesMode === 'onlyActiveEditor') {
+                const activeEditor = vscode.window.activeTextEditor;
+                visibleEditorUris = activeEditor ? [activeEditor.document.uri.path] : [];
+            } else { // showFilesMode === 'allVisibleEditors'
+                visibleEditorUris = vscode.window.tabGroups.all
+                    .flatMap(group => group.tabs)
+                    .filter(tab => tab.input && (tab.input as any).uri) // Ensure tab has a file
+                    .map(tab => (tab.input as any).uri.fsPath);
+            }
+            tagsConsidered = tagsConsidered.filter(tag => visibleEditorUris.includes(tag.resource.path));
+        }
+
+        //Create the groups
         let tagsGroupedByObj: {
             [key: string]: Tag[];
         }
         if (this.groupBy === 'file') {
-            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'resource', (uri) => uri.toString());
+            tagsGroupedByObj = this._tagsController.groupBy(tagsConsidered, 'resource', (uri) => uri.toString());
         } else if (this.groupBy === 'style') {
-            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'category');
+            tagsGroupedByObj = this._tagsController.groupBy(tagsConsidered, 'category');
         } else if (this.groupBy === 'tagName') {
-            tagsGroupedByObj = this._tagsController.groupBy(this._tagsController.tags, 'tagName');
+            tagsGroupedByObj = this._tagsController.groupBy(tagsConsidered, 'tagName');
         } else { //default empty
             tagsGroupedByObj = {};
         }
 
-        if (getExtensionConfig().view.showVisibleFilesOnly) {
-            let visibleEditorUris: string[];
-
-            if (getExtensionConfig().view.showVisibleFilesOnlyMode === 'onlyActiveEditor') {
-                const activeEditor = vscode.window.activeTextEditor;
-                visibleEditorUris = activeEditor ? [activeEditor.document.uri.path] : [];
-            } else {
-                visibleEditorUris = vscode.window.visibleTextEditors.map((te) => te.document.uri.path);
-            }
-
-            Object.keys(tagsGroupedByObj).forEach((filename) => {
-                tagsGroupedByObj[filename].forEach((tag: Tag) => {
-                    // Remove tags that are not in visible editors
-                    if (!visibleEditorUris.includes(tag.resource.path)) {
-                        tagsGroupedByObj[filename].splice(tagsGroupedByObj[filename].indexOf(tag), 1);
-                    }
-                });
-            });
-        }
-
         let roots: RootElement[] = []
         Object.keys(tagsGroupedByObj).forEach((item) => {
-            /*
-            RIGHT NOW they are all equivalent but that will change
-            */
+            let expanded = getExtensionConfig().view.expanded ? true : false;
             if (this.groupBy === 'file') {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
                     label: path.basename(vscode.Uri.parse(item).fsPath),
                     out: tagsGroupedByObj[item][0].outFile,
                     id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource.fsPath)),
-                    expanded: false,
+                    expanded: expanded,
                     children: tagsGroupedByObj[item]
                 })
             } else if (this.groupBy === 'style') {
@@ -93,12 +91,14 @@ export class TreeDataModel {
             }
         });
 
-        roots.forEach((root) => {
-            const lastRoot = this.lastRoots.find((r) => r.id === root.id);
-            if (lastRoot) {
-                root.expanded = lastRoot.expanded;
-            }
-        });
+        if (!getExtensionConfig().view.expanded) {
+            roots.forEach((root) => {
+                const lastRoot = this.lastRoots.find((r) => r.id === root.id);
+                if (lastRoot) {
+                    root.expanded = lastRoot.expanded;
+                }
+            });
+        }
 
         function sortRootsByLabels(roots: RootElement[]): RootElement[] {
             return roots.sort((a, b) => {

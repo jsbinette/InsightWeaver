@@ -7,13 +7,13 @@ window.addEventListener("load", main);
 
 // Declare Html elements.
 const startChatButton = document.getElementById("start-chat-gpt-button");
-console.log("HERE!")
 const imageButton = document.getElementById("image-generate-button");
 const apiKeySaveButton = document.getElementById("api-key-save-button-id") as any;
 const apiKeyTextField = document.getElementById("api-key-text-field-id") as any;
 const temperatureTextField = document.getElementById("temperature-text-field-id") as any;
 const imageNumberTextField = document.getElementById("image-number-text-field-id") as any;
 const imageSizeTextField = document.getElementById("image-size-text-field-id") as any;
+const modelSelect = document.getElementById("model-select-id") as any;
 
 /**
  * Main function
@@ -30,15 +30,20 @@ function main() {
         const message = event.data; // The json data that the extension sent
         switch (message.command) {
             case 'settings-exist':
-                // Append api key.
-                const apiKey = message.data.apiKey;
-                const temperature = message.data.temperature;
-                const responseNumber = message.data.responseNumber;
-                const imageSize = message.data.imageSize;
-                apiKeyTextField.value = apiKey;
-                temperatureTextField.value = temperature;
-                imageNumberTextField.value = responseNumber;
-                imageSizeTextField.value = imageSize;
+                apiKeyTextField.value = message.data.apiKey;
+                temperatureTextField.value = message.data.temperature;
+                imageNumberTextField.value = message.data.responseNumber;
+                imageSizeTextField.value = message.data.imageSize;
+                modelSelect.innerHTML = "";
+                // Populate options dynamically
+                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1"];
+                message.data.models.forEach( (optionText:string) => {
+                    const optionElement = document.createElement("option");
+                    optionElement.value = optionText; // Set the value
+                    optionElement.textContent = optionText; // Set the display text
+                    modelSelect.appendChild(optionElement); // Append to select
+                });
+                modelSelect.value = message.data.model;
                 break;
             case 'error':
                 console.log(message);
@@ -77,7 +82,8 @@ function handleSaveClick() {
         apiKey: apiKeyTextField?.value,
         temperature: temperatureTextField?.value,
         responseNumber: imageNumberTextField?.value,
-        imageSize: imageSizeTextField?.value
+        imageSize: imageSizeTextField?.value,
+        model: modelSelect?.value
     }
     sidebarVscode.postMessage({
         command: "save-settings",

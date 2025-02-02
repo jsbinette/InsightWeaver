@@ -4,7 +4,7 @@ import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
 import { TreeDataModel, RootElement } from '../utilities/treeDataModel';
 import { Tag } from '../utilities/tagsController';
 
-export class InstructionTreeWebviewProvider implements vscode.WebviewViewProvider {
+export class TreeWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewId = 'treeView';
     private _view?: vscode.WebviewView;
 

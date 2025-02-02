@@ -14,7 +14,7 @@ export async function askToChatGpt(query: string | undefined, apiKey: string): P
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             body: JSON.stringify({
-                model: "GPT-4o",
+                model: "GPT-4o", //leave it as it is, no reasoning models for this
                 messages: [{ role: "user", content: query }],
                 temperature: 1
             }),
@@ -49,16 +49,15 @@ export async function askToChatGpt(query: string | undefined, apiKey: string): P
  * @param temperature.
  * @returns 
  */
-export function askToChatGptAsStream(query: Array<any> | undefined, apiKey: string, temperature: number): Observable<string> {
+export function askToChatGptAsStream(model: string, query: Array<any> | undefined, apiKey: string, temperature: number): Observable<string> {
 
     return new Observable<string>(observer => {
         // 👇️ const response: Response
         const response = fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             body: JSON.stringify({
-                model: "gpt-4o",
+                model: model,
                 messages: query,
-                // temperature: 0.7,
                 temperature: Number(temperature),
                 stream: true
             }),

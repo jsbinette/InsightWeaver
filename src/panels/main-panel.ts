@@ -219,7 +219,7 @@ export class ChatGptPanel {
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
      * @param question :string
      */
-    private _askToChatGpt(question: string, systemcontent: string = "") {
+    private _askToChatGpt(question: string, developercontent: string = "") {
         if (question == undefined || question == null || question == '') {
             //vscode.window.showInformationMessage('Please enter a question!');
             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please enter a question!' });
@@ -228,6 +228,7 @@ export class ChatGptPanel {
         const storeData = getStoreData(this._context);
         const existApiKey = storeData.apiKey;
         const existTemperature = storeData.temperature;
+        const existModel = storeData.model;
         var asssistantResponse = { role: "assistant", content: '' };
         if (existApiKey == undefined || existApiKey == null || existApiKey == '') {
             //vscode.window.showInformationMessage('Please add your ChatGpt api key!');
@@ -235,22 +236,24 @@ export class ChatGptPanel {
         } else if (existTemperature == undefined || existTemperature == null || existTemperature == 0) {
             //vscode.window.showInformationMessage('Please add temperature!');
             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please add temperature!' });
-
+        } else if (existModel == undefined || existModel == null || existModel == '') {
+            //vscode.window.showInformationMessage('Please add model!');
+            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please add model!' });
         }
         else {
             // make the message
             let questionMessage = { role: "user", content: question };
             // get previous messages
             let messages = getChatData(this._context);
-            //if it's empty this is where we add the system message
+            //if it's empty this is where we add the developer message
             if (messages.length == 0) {
-                if (systemcontent != "") {
-                    messages.push({ role: "system", content: systemcontent });
+                if (developercontent != "") {
+                    messages.push({ role: "developer", content: developercontent });
                 }
             }
             messages.push(questionMessage);
             setChatData(this._context, messages);
-            askToChatGptAsStream(messages, existApiKey, existTemperature).subscribe(answer => {
+            askToChatGptAsStream(existModel, messages, existApiKey, existTemperature).subscribe(answer => {
                 //check for 'END MESSAGE' string, 
                 if (answer == 'END MESSAGE') {
                     var chatData = getChatData(this._context);

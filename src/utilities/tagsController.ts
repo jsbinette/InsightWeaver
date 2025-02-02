@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 import { minimatch } from 'minimatch';
 import { getExtensionConfig , deserializeWithUri} from './utility.service';
 import { InstructionsController } from './instructionsController';
+import { get } from 'http';
 
 
 export class TagsController {
@@ -135,12 +136,7 @@ export class TagsController {
         return [...new Set(input.trim().split(',').map((e) => e.trim()).filter((e) => e.length))];
     }
 
-    private async _decorateWords(
-        editor: vscode.TextEditor,
-        words: string[],
-        style: string,
-        noAdd: boolean
-    ): Promise<void> {
+    private async _decorateWords( editor: vscode.TextEditor, words: string[], style: string, noAdd: boolean ): Promise<void> {
         const decoStyle = this.styles[style]?.type || this.styles['default'].type;
 
         const locations = this._findWords(editor.document, words);
@@ -236,6 +232,9 @@ export class TagsController {
             let textAfterTagRange = new vscode.Range(document.positionAt(document.offsetAt(sortedLocations[i].range.end) + 1), document.positionAt(tagEnd))
 
             let label = document.getText(new vscode.Range(sortedLocations[i].range.end, document.lineAt(sortedLocations[i].range.end.line).range.end))
+            if (!getExtensionConfig().view.words.hide) {
+                label = "<div class=\"" +style + "-style\">" + document.getText(new vscode.Range(sortedLocations[i].range.start, sortedLocations[i].range.end))+"</div> <span>" + label + "</span>";
+            }
             /*
              * HANDLING OF THE @out TAG
              * For instructions: Since the text of the tag before out will not be out, just skip the out tags in the getInstructions function.
@@ -369,6 +368,11 @@ export class TagsController {
                 fs.rmdirSync(workspaceFolder + '/.instructions', { recursive: true });
             }
         }
+    }
+
+    public reloadWordsAndStyles() {
+        this.styles = this._reLoadDecorations();
+        this.words = this._reLoadWords();
     }
 
 

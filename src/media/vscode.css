@@ -310,3 +310,36 @@ select {
     outline-color: var(--vscode-input-border);
     background-color: var(--vscode-input-background);
 }
+
+.blue-style {
+    color: #1874e2;
+    padding-right: 4px;
+}
+.green-style {
+    color: #10a37f;
+    padding-right: 4px;
+}
+.purple-style {
+    color: #C679E0;
+    padding-right: 4px;
+}
+.red-style {
+    color: #F44336;
+    padding-right: 4px;
+}
+.brown-style {
+    color: #cc6d2e;
+    padding-right: 4px;
+}
+.sky-style {
+    color: #03A9F4;
+    padding-right: 4px;
+}
+.lime-style {
+    color: #CDDC39;
+    padding-right: 4px;
+}
+.yellow-style {
+    color: #cdb116;
+    padding-right: 4px;
+}

@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { ImagePanel } from './panels/image-panel';
 import { ChatGptPanel } from './panels/main-panel';
 import { SideBarViewProvider } from './views/sidebar-view';
-import { InstructionTreeWebviewProvider, editorJumptoRange } from './views/tree-view';
+import { TreeWebviewProvider, editorJumptoRange } from './views/tree-view';
 import { getStoreData, getExtensionConfig } from './utilities/utility.service';
 import { registerContextMenuCommands } from './utilities/context-menu-command';
 import { TagsController } from './utilities/tagsController';
@@ -17,7 +17,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const tagsController = new TagsController(context);
 	const treeDataModel = new TreeDataModel(tagsController, context);
-	const instructionTreeWebviewProvider = new InstructionTreeWebviewProvider(context.extensionUri, treeDataModel)
+	const treeWebviewProvider = new TreeWebviewProvider(context.extensionUri, treeDataModel)
 
 	// Chat panel register
 	const chatPanelCommand = vscode.commands.registerCommand("instructions-manager.start", () => {
@@ -65,18 +65,38 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('instructions-manager.refresh', () => {
 			refreshAllTags();
-			instructionTreeWebviewProvider.refresh();
+			treeWebviewProvider.refresh();
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.toggleShowVisibleFilesOnly', () => {
-			getExtensionConfig().update(
-				'view.showVisibleFilesOnly',
-				!getExtensionConfig().view.showVisibleFilesOnly
-			);
-			refreshAllTags();
-			instructionTreeWebviewProvider.refresh();
+		vscode.commands.registerCommand('instructions-manager.showFilesModeWholeWorkspace', () => {
+			getExtensionConfig().update('view.showFilesMode', 'wholeWorkspace');
+			vscode.commands.executeCommand('instructions-manager.scanWorkspace')
+			treeWebviewProvider.refresh();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('instructions-manager.showFilesModeAllVisibleEditors', () => {
+			getExtensionConfig().update('view.showFilesMode', 'allVisibleEditors');
+			treeWebviewProvider.refresh();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('instructions-manager.showFilesModeOnlyActiveEditor', () => {
+			getExtensionConfig().update('view.showFilesMode', 'onlyActiveEditor');
+			treeWebviewProvider.refresh();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('instructions-manager.reloadWordsAndStyles', () => {
+			tagsController.reloadWordsAndStyles();
+			if (vscode.window.activeTextEditor?.document) {
+				tagsController.updateTags(vscode.window.activeTextEditor?.document);
+			}
 		})
 	);
 
@@ -85,7 +105,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			treeDataModel.changeGoupBy(selectedChoice);
 			refreshAllTags();
 			//treeDataProvider.refresh();
-			instructionTreeWebviewProvider.refresh();
+			treeWebviewProvider.refresh();
 		})
 	);
 
@@ -95,7 +115,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			treeDataModel.resetWorkspace();
 			tagsController.loadFromWorkspace();
 			treeDataModel.loadFromWorkspace();
-			instructionTreeWebviewProvider.refresh();
+			treeWebviewProvider.refresh();
 		})
 	);
 
@@ -141,14 +161,14 @@ export async function activate(context: vscode.ExtensionContext) {
 				if (treeDataModel.groupBy === 'file') {
 					if (element.out) {
 						await tagsController.removeOutFileTag(element.resource);
-					} else { 
+					} else {
 						await tagsController.addOutFileTag(element.resource);
 					}
 					if (getExtensionConfig().enable) {
 						let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource?.toString());
 						if (document) {
 							await tagsController.updateTags(document);
-							instructionTreeWebviewProvider.refresh();
+							treeWebviewProvider.refresh();
 							const openEditor = vscode.window.visibleTextEditors.find(
 								(editor) => editor.document.uri.toString() === document.uri.toString()
 							);
@@ -177,7 +197,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					let document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === element.resource.toString());
 					if (document) {
 						await tagsController.updateTags(document);
-						instructionTreeWebviewProvider.refresh();
+						treeWebviewProvider.refresh();
 					}
 				}
 			}
@@ -222,12 +242,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(InstructionTreeWebviewProvider.viewId, instructionTreeWebviewProvider)
+		vscode.window.registerWebviewViewProvider(TreeWebviewProvider.viewId, treeWebviewProvider)
 	);
 
 	/** Module Initialization */
 	refreshAllTags();
-	instructionTreeWebviewProvider.refresh();
+	treeWebviewProvider.refresh();
 	onDidChange();
 
 	/** Event Setup */
@@ -269,21 +289,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	async function onDidChange(editor?: vscode.TextEditor, event?: vscode.TextDocumentChangeEvent): Promise<void> {
 		if (!editor) {
 			// If no editor, refresh only the tree view
-			instructionTreeWebviewProvider.refresh();
+			treeWebviewProvider.refresh();
 			return;
 		}
 
 		if (getExtensionConfig().enable) {
 			await tagsController.decorate(editor);
+			treeWebviewProvider.refresh();
 		}
-		instructionTreeWebviewProvider.refresh();
 	}
 
 	async function onDidSave(editor?: vscode.TextEditor): Promise<void> {
 		if (editor && getExtensionConfig().enable) {
 			await tagsController.decorate(editor);
+			treeWebviewProvider.refresh();
 		}
-		instructionTreeWebviewProvider.refresh();
 	}
 
 

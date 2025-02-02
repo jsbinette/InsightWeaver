@@ -2,16 +2,16 @@
   "name": "instructions-manager",
   "displayName": "Instructions Manager",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "GPLv3",
   "publisher": "jsbinette",
   "bugs": {
-    "url": "https://github.com/jsbinette/instructions-extension/issues",
+    "url": "https://github.com/jsbinette/instructions-manager/issues",
     "email": "jsbinette@yahoo.com"
   },
-  "homepage": "https://github.com/jsbinette/instructions-extension/main/README.md",
+  "homepage": "https://github.com/jsbinette/instructions-manager/main/README.md",
   "repository": {
-    "url": "https://github.com/ismailkasan/instructions-extension",
+    "url": "https://github.com/ismailkasan/instructions-manager",
     "type": "git"
   },
   "keywords": [
@@ -87,16 +87,34 @@
       {
         "command": "instructions-manager.refresh",
         "title": "Quick-Refresh View",
-        "category": "instructions",
+        "category": "Instructions",
         "icon": {
           "light": "images/refresh-light.svg",
           "dark": "images/refresh-dark.svg"
         }
       },
       {
-        "command": "instructions-manager.toggleShowVisibleFilesOnly",
-        "title": "Toggle: Show Tags for Visible Editors / All Files",
-        "category": "instructions",
+        "command": "instructions-manager.showFilesModeWholeWorkspace",
+        "title": "Show Tags for Whole Workspace (if Workspace is present)",
+        "category": "Instructions",
+        "icon": {
+          "light": "images/toggle-files-light.svg",
+          "dark": "images/toggle-files-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.showFilesModeAllVisibleEditors",
+        "title": "Show Tags for All Open Tabs",
+        "category": "Instructions",
+        "icon": {
+          "light": "images/toggle-files-light.svg",
+          "dark": "images/toggle-files-dark.svg"
+        }
+      },
+      {
+        "command": "instructions-manager.showFilesModeOnlyActiveEditor",
+        "title": "Show Tags for Active File",
+        "category": "Instructions",
         "icon": {
           "light": "images/toggle-files-light.svg",
           "dark": "images/toggle-files-dark.svg"
@@ -105,42 +123,13 @@
       {
         "command": "instructions-manager.toggleViewKeepFilesExpanded",
         "title": "Toggle: Keep File View expanded",
-        "category": "instructions",
+        "category": "Instructions",
         "icon": "images/toggle-expanded.svg"
-      },
-      {
-        "command": "instructions-manager.chooseGroupBy",
-        "title": "Choose how to group tags",
-        "category": "instructions",
-        "icon": {
-          "light": "images/filter-light.svg",
-          "dark": "images/filter-dark.svg"
-        }
-      },
-      {
-        "command": "instructions-manager.goToTag",
-        "title": "Go to Tag",
-        "category": "instructions"
-      },
-      {
-        "command": "instructions-manager.rootToggle",
-        "title": "Toogle Root Item",
-        "category": "instructions"
-      },
-      {
-        "command": "instructions-manager.outGroupToggle",
-        "title": "Toogle Group Item (out-file, out-style, out-tagName",
-        "category": "instructions"
-      },
-      {
-        "command": "instructions-manager.outToggle",
-        "title": "Toogle Root Item",
-        "category": "instructions"
       },
       {
         "command": "instructions-manager.scanWorkspace",
         "title": "Scan Workspace for Tags",
-        "category": "instructions",
+        "category": "Instructions",
         "icon": {
           "light": "images/scan-workspace.svg",
           "dark": "images/scan-workspace-dark.svg"
@@ -149,7 +138,12 @@
       {
         "command": "instructions-manager.debug.state.reset",
         "title": "Reset the internal state to fix potential problems",
-        "category": "instructions:Debug"
+        "category": "Instructions"
+      },
+      {
+        "command": "instructions-manager.reloadWordsAndStyles",
+        "title": "DOES NOT WORK Reload Tag Names and Colors (styles)",
+        "category": "Instructions"
       }
     ],
     "keybindings": [
@@ -191,13 +185,6 @@
           "group": "ChatGpt",
           "when": "editorLangId == typescript || editorLangId == javascript || editorLangId == csharp || editorLangId == java"
         }
-      ],
-      "view/title": [
-        {
-          "command": "instructions-manager.chooseGroupBy",
-          "when": "treeView",
-          "group": "navigation@3"
-        }
       ]
     },
     "webviews": [
@@ -217,23 +204,19 @@
           "category": "general",
           "type": "boolean",
           "default": true,
-          "description": "Enable/Disable the extension."
+          "description": "Enable/Disable the extension.",
+          "order": 1
         },
-        "instructions-manager.view.showVisibleFilesOnly": {
-          "category": "view",
-          "type": "boolean",
-          "default": false,
-          "description": "Show tags for visible editors/files only."
-        },
-        "instructions-manager.view.showVisibleFilesOnlyMode": {
+        "instructions-manager.view.showFilesMode": {
           "category": "view",
           "type": "string",
           "enum": [
             "allVisibleEditors",
-            "onlyActiveEditor"
+            "onlyActiveEditor",
+            "wholeWorkspace"
           ],
-          "default": "allVisibleEditors",
-          "description": "Select 'Show Visible editors only' mode. Either show tags for all visible editors or only for the currently selected editor. default: All Visible Editors"
+          "default": "wholeWorkspace",
+          "description": "Either show tags for all files in workspace, visible editors or only for the currently selected editor. default: Whole Workspace"
         },
         "instructions-manager.view.expanded": {
           "category": "view",
@@ -406,12 +389,14 @@
           "category": "view",
           "type": "boolean",
           "default": false,
+          "order": 3,
           "markdownDescription": "Use .instructions files with tags and processed instructions for debugging purposes  or others."
         },
         "instructions-manager.view.files.workspace": {
           "category": "view",
           "type": "boolean",
           "default": false,
+          "order": 2,
           "markdownDescription": "Use workspace state with tags to lead them when opening instead of a scan. This works only if not in files"
         }
       }
