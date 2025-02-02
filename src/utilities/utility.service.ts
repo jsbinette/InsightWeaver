@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import EventEmitter = require('events');
 
 export function getExtensionConfig(): vscode.WorkspaceConfiguration {
-    return vscode.workspace.getConfiguration('instructions-manager');
+  return vscode.workspace.getConfiguration('instructions-manager');
 }
 
 
@@ -115,6 +115,18 @@ export function getChatData(context: vscode.ExtensionContext): any {
   return chatData as any;
 }
 
+export function deserializeWithUri(json: string): any {
+  return JSON.parse(json, (key, value) => {
+    let a = value;
+    if (key == 'resource') {
+      a = vscode.Uri.parse(value);
+    } else if (['range', 'textAfterTagRange', 'textBeforeTagRange'].includes(key)) {
+      a = new vscode.Range(value[0].line, value[0].character, value[1].line, value[1].character);
+    }
+    return a;
+  });
+}
+
 /**
 * State Manager has read and write methods for api key. This methods set and get the api key from context.globalState.
 * @param context :vscode.ExtensionContext.
@@ -135,10 +147,10 @@ export function globalStateManager(context: vscode.ExtensionContext) {
       storeData: context.globalState.get('storeData')
     };
   }
-  
+
   function readHistory() {
-    var historyData =  context.globalState.get('historyData')
-    if(historyData == undefined){
+    var historyData = context.globalState.get('historyData')
+    if (historyData == undefined) {
       historyData = [];
     }
     return {
@@ -147,8 +159,8 @@ export function globalStateManager(context: vscode.ExtensionContext) {
   }
 
   function readChat() {
-    var chatData =  context.globalState.get('chatData')
-    if(chatData == undefined){
+    var chatData = context.globalState.get('chatData')
+    if (chatData == undefined) {
       chatData = [];
     }
     return {

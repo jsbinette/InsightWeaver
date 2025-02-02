@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getStoreData, getExtensionConfig } from './utility.service';
+import { getStoreData, getExtensionConfig, deserializeWithUri } from './utility.service';
 import { askToChatGpt } from "../utilities/chat-gpt-api.service";
 import { TagsController, Tag } from './tagsController';
 
@@ -29,7 +29,7 @@ export class InstructionsController {
         } else {
             let allTags: Tag[]
             if (getExtensionConfig().view.files.workspace) {
-                allTags = JSON.parse(this._context.workspaceState.get("tags.object", "{}"));
+                allTags = deserializeWithUri(this._context.workspaceState.get("tags.array", "[]"));
             } else {
                 allTags = this._tagsController.tags;
             }

@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { minimatch } from 'minimatch';
-import { getExtensionConfig } from './utility.service';
+import { getExtensionConfig , deserializeWithUri} from './utility.service';
 import { InstructionsController } from './instructionsController';
 
 
@@ -427,17 +427,6 @@ export class TagsController {
             const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.instructions', 'tags.json');
             this._tags = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } else if (getExtensionConfig().view.files.workspace) {
-            function deserializeWithUri(json: string): any {
-                return JSON.parse(json, (key, value) => {
-                    let a = value;
-                    if (key == 'resource') {
-                        a = vscode.Uri.parse(value);
-                    } else if (key == 'range') {
-                        a = new vscode.Range(value[0].line, value[0].character, value[1].line, value[1].character);
-                    }
-                    return a;
-                });
-            }
             this._tags = deserializeWithUri(this._context.workspaceState.get("tags.array", "[]"));
         } //else this._tags == {} no arms done
 
