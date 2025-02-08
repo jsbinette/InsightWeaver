@@ -8,9 +8,19 @@ The two extension offered a great start to do what I wanted to do which was to c
 
 Change the version in package.json, add a new entry in the changelog above, and then run the following commands:
 
-```
+```javascript
 vsce package
 ```
+
+## DEBUG
+
+You can debug the front end in workspace and put some breakpoints there.
+If you have trouble you can put a line of code in the file:
+
+```javascript
+debugger;
+```
+
 # NOTES
 
 TAGS:

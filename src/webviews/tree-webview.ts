@@ -43,9 +43,9 @@ function treeMain() {
         });
     });
 
-    document.querySelectorAll('.rootCheckbox').forEach(rootCheckbox => {
-        rootCheckbox.addEventListener('click', () => {
-            const id = rootCheckbox.id;
+    document.querySelectorAll('.rootLabel').forEach(rootLabel => {
+        rootLabel.addEventListener('click', () => {
+            const id = rootLabel.id;
             treeVscode.postMessage({
                 command: "outGroupToggle",
                 args: [id],
@@ -74,5 +74,39 @@ function treeMain() {
             });
         }
         );
+    });
+
+    const list = document.getElementById("tree-list") as HTMLUListElement;
+    let draggedItem: HTMLLIElement | null = null;
+
+    list.querySelectorAll("li").forEach(item => {
+        item.addEventListener("dragstart", (event: DragEvent) => {
+            draggedItem = event.currentTarget as HTMLLIElement;
+            event.dataTransfer!.effectAllowed = "move";
+            event.dataTransfer!.setData("text/plain", ""); // Required for Firefox
+        });
+
+        item.addEventListener("dragover", (event: DragEvent) => {
+            event.preventDefault();
+            event.dataTransfer!.dropEffect = "move";
+        });
+
+        item.addEventListener("drop", (event: DragEvent) => {
+            event.preventDefault();
+            if (draggedItem && draggedItem !== item) {
+                const parent = item.parentNode!;
+                const next = (draggedItem === item.nextSibling) ? item.nextSibling?.nextSibling : item.nextSibling;
+                parent.insertBefore(draggedItem, next);
+                treeVscode.postMessage({
+                    command: "draggedRootElement",
+                    args: [draggedItem.id, item.id] // Sending the dragged and dropped-on item
+                });
+    
+            }
+        });
+
+        item.addEventListener("dragend", () => {
+            draggedItem = null;
+        });
     });
 }

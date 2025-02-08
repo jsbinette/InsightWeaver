@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { getExtensionConfig } from '../utilities/utility.service';
 import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
 import { TreeDataModel, RootElement } from '../utilities/treeDataModel';
 import { Tag } from '../utilities/tagsController';
@@ -56,7 +55,7 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
             <option value="style" ${this.dataModel.groupBy === 'style' ? 'selected' : ''}>Style</option>
             <option value="tagName" ${this.dataModel.groupBy === 'tagName' ? 'selected' : ''}>Tag Name</option>
             </select>
-            <ul class="tree">
+            <ul class="tree" id="tree-list">
                ${this.createRootListMarkup(rootElements)}
             </ul>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
@@ -70,12 +69,10 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
     private createRootListMarkup(elements: RootElement[]): string {
         return elements.map(el => {
             return `
-                <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.expanded ? 'expanded' : ''}" id="${el.id}">
-            ${el.children ? `<span class="toggle"><i class="codicon codicon-chevron-right"></i></span>` : ''}
-            <label>
-                <input type="checkbox" id="${el.id}" class="rootCheckbox" ${el.out ? 'grayed-out' : ''}/> 
-            <label id="${el.id}"  class="treeLabel">${el.label}</label>
-            </label>
+                <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.expanded ? 'expanded' : ''}" id="${el.id}"  draggable="true">
+            ${el.children ? `<span class="toggle"><i class="codicon codicon-chevron-${el.expanded ? 'down' : 'right'}"></i></span>` : ''}
+                <i class="codicon codicon-menu drag-handle"></i>
+            <label id="${el.id}"  class="rootLabel" ${el.out ? '' : 'checked'}>${el.label}</label>
             ${el.children ? `<ul class="child-container">${this.createTagListMarkup(el.children)}</ul>` : ''}
         </li>`;
         }).join('');
@@ -85,8 +82,9 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
         return elements.map(el => {
             return `
                 <li class="list-item ${el.out ? 'grayed-out' : ''}">
-            <label>
+            <label class="codicon-checkbox">
                 <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? '' : 'checked'}/> 
+            <span class="codicon codicon-check"></span>
             <label id="${el.id}"  class="treeLabel">${el.label}</label>
             </label>
         </li>`;

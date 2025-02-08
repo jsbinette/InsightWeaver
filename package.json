@@ -2,7 +2,7 @@
   "name": "instructions-manager",
   "displayName": "Instructions Manager",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "license": "GPLv3",
   "publisher": "jsbinette",
   "bugs": {
@@ -91,15 +91,6 @@
         "icon": {
           "light": "images/refresh-light.svg",
           "dark": "images/refresh-dark.svg"
-        }
-      },
-      {
-        "command": "instructions-manager.showFilesModeWholeWorkspace",
-        "title": "Show Tags for Whole Workspace (if Workspace is present)",
-        "category": "Instructions",
-        "icon": {
-          "light": "images/toggle-files-light.svg",
-          "dark": "images/toggle-files-dark.svg"
         }
       },
       {

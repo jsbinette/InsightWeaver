@@ -70,14 +70,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.showFilesModeWholeWorkspace', () => {
-			getExtensionConfig().update('view.showFilesMode', 'wholeWorkspace');
-			vscode.commands.executeCommand('instructions-manager.scanWorkspace')
-			treeWebviewProvider.refresh();
-		})
-	);
-
-	context.subscriptions.push(
 		vscode.commands.registerCommand('instructions-manager.showFilesModeAllVisibleEditors', () => {
 			getExtensionConfig().update('view.showFilesMode', 'allVisibleEditors');
 			treeWebviewProvider.refresh();
@@ -94,8 +86,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('instructions-manager.reloadWordsAndStyles', () => {
 			tagsController.reloadWordsAndStyles();
-			if (vscode.window.activeTextEditor?.document) {
-				tagsController.updateTags(vscode.window.activeTextEditor?.document);
+			if (vscode.window.activeTextEditor) {
+				tagsController.decorate(vscode.window.activeTextEditor);
 			}
 		})
 	);
@@ -205,39 +197,49 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.scanWorkspace", () => {
-			vscode.workspace
-				.findFiles(tagsController.includePattern, tagsController.excludePattern, tagsController.maxFilesLimit)
-				.then(
-					(files) => {
-						if (!files || files.length === 0) {
-							console.log('No files found');
-							return;
-						}
+		vscode.commands.registerCommand("instructions-manager.draggedRootElement", async (id: string, idNext: string | null) => {
+			const tree = treeDataModel.lastRoots;
+			const element = tree.find((el) => el.id === id);
+			
+			if (!element) return; // If element doesn't exist, exit early
+		
+			let newRank: number;
+			let insertIndex: number;
+		
+			if (idNext) {
+				const elementNext = tree.find((el) => el.id === idNext);
+				if (!elementNext) return; // Invalid case, do nothing
+		
+				newRank = elementNext.rank;
+				insertIndex = tree.findIndex(el => el.id === idNext); // Find position BEFORE removing
+			} else {
+				// If dropped at the end, assign the highest rank + 1
+				newRank = Math.max(...tree.map(el => el.rank), 0) + 1;
+				insertIndex = tree.length; // Last position
+			}
+		
+			// Remove element from its old position **after** determining the insertIndex
+			tree.splice(tree.indexOf(element), 1);
+		
+			// Insert at the determined position
+			tree.splice(insertIndex, 0, element);
+		
+			// Reassign ranks sequentially to maintain order
+			tree.forEach((el, index) => {
+				el.rank = index + 1
+				el.children?.forEach((child) => {
+					child.rank = el.rank;
+				});
+			});
+		
+			treeDataModel.saveToWorkspace();
+		})
+	);
 
-						function isTextFile(filePath: string): boolean {
-							const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
-							const textChars = buffer.toString('utf8').split('').filter(char => {
-								const code = char.charCodeAt(0);
-								return (code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13;
-							});
-
-							return textChars.length / buffer.length > 0.9; // Adjust the threshold as needed
-						}
-
-						files.forEach((file) => {
-							if (isTextFile(file.fsPath)) {
-								vscode.workspace.openTextDocument(file).then(
-									(document) => {
-										tagsController.updateTags(document);
-									},
-									(err) => console.error(err)
-								);
-							}
-						});
-					},
-					(err) => console.error(err)
-				);
+	context.subscriptions.push(
+		vscode.commands.registerCommand("instructions-manager.scanWorkspace", async () => {
+			await tagsController.scanWorkspace();
+			treeWebviewProvider.refresh();
 		})
 	);
 

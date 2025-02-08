@@ -66,7 +66,6 @@ function main() {
             }
         });
     } catch (err: any) {
-        console.log('errrr js');
         console.log(err);
     }
 }

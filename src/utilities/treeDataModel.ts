@@ -5,7 +5,6 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { getExtensionConfig } from './utility.service';
 import { TagsController, Tag, Location } from './tagsController';
-import { get } from 'http';
 
 
 export class TreeDataModel {
@@ -58,9 +57,10 @@ export class TreeDataModel {
             tagsGroupedByObj = {};
         }
 
+        let expanded = getExtensionConfig().view.expanded ? true : false;
         let roots: RootElement[] = []
+
         Object.keys(tagsGroupedByObj).forEach((item) => {
-            let expanded = getExtensionConfig().view.expanded ? true : false;
             if (this.groupBy === 'file') {
                 roots.push({
                     resource: tagsGroupedByObj[item][0].resource,
@@ -68,6 +68,7 @@ export class TreeDataModel {
                     out: tagsGroupedByObj[item][0].outFile,
                     id: this._getIdRoot(JSON.stringify(tagsGroupedByObj[item][0].resource.fsPath)),
                     expanded: expanded,
+                    rank: 0,
                     children: tagsGroupedByObj[item]
                 })
             } else if (this.groupBy === 'style') {
@@ -77,6 +78,7 @@ export class TreeDataModel {
                     out: tagsGroupedByObj[item][0].outStyle,
                     id: this._getIdRoot(tagsGroupedByObj[item][0].style),
                     expanded: false,
+                    rank: 0,
                     children: tagsGroupedByObj[item]
                 });
             } else if (this.groupBy === 'tagName') {
@@ -86,45 +88,25 @@ export class TreeDataModel {
                     out: tagsGroupedByObj[item][0].outTagName,
                     id: this._getIdRoot(tagsGroupedByObj[item][0].tagName),
                     expanded: false,
+                    rank: 0,
                     children: tagsGroupedByObj[item]
                 });
             }
         });
 
-        if (!getExtensionConfig().view.expanded) {
-            roots.forEach((root) => {
-                const lastRoot = this.lastRoots.find((r) => r.id === root.id);
-                if (lastRoot) {
-                    root.expanded = lastRoot.expanded;
-                }
-            });
-        }
+        roots.forEach((root) => {
+            const lastRoot = this.lastRoots.find((r) => r.id === root.id);
+            if (lastRoot) {
+                root.expanded = lastRoot.expanded;
+                root.rank = lastRoot.rank;
+                //assign to the children the rank
+                root.children?.forEach((child) => {
+                    child.rank = root.rank;
+                });
+            }
+        });
 
-        function sortRootsByLabels(roots: RootElement[]): RootElement[] {
-            return roots.sort((a, b) => {
-                return a.label.localeCompare(b.label);
-            });
-        }
-
-        function sortChildrenByLocation(roots: RootElement[]): RootElement[] {
-            roots.forEach(root => {
-                if (root.children) {
-                    root.children = root.children.sort((a, b) => {
-                        if (a.location && b.location) {
-                            const startComparison = a.location.range.start.compareTo(b.location.range.start);
-                            if (startComparison !== 0) {
-                                return startComparison;
-                            }
-                            return a.location.range.end.compareTo(b.location.range.end);
-                        }
-                        return 0; // If either location is undefined, consider them equal
-                    });
-                }
-            });
-            return roots;
-        }
-
-        this.lastRoots = sortChildrenByLocation(sortRootsByLabels(roots));
+        this.lastRoots = this._sortChildrenByLocation(this._sortRootsByRankOrLabel(roots));
         this.saveToWorkspace();
         return this.lastRoots;
     }
@@ -136,6 +118,41 @@ export class TreeDataModel {
     private _isWorkspaceAvailable() {
         //single or multi root
         return vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length >= 1;
+    }
+
+    private _sortRootsByRankOrLabel(roots: RootElement[]): RootElement[] {
+        // Check if all ranks are 0
+        const allRanksZero = roots.every(root => root.rank === 0);
+
+        if (allRanksZero) {
+            // Sort by label
+            roots.sort((a, b) => a.label.localeCompare(b.label));
+            // Assign sequential ranks
+            roots.forEach((root, index) => root.rank = index + 1);
+        } else {
+            // Sort by rank (ascending order)
+            roots.sort((a, b) => a.rank - b.rank);
+        }
+
+        return roots;
+    }
+
+    private _sortChildrenByLocation(roots: RootElement[]): RootElement[] {
+        roots.forEach(root => {
+            if (root.children) {
+                root.children = root.children.sort((a, b) => {
+                    if (a.location && b.location) {
+                        const startComparison = a.location.range.start.compareTo(b.location.range.start);
+                        if (startComparison !== 0) {
+                            return startComparison;
+                        }
+                        return a.location.range.end.compareTo(b.location.range.end);
+                    }
+                    return 0; // If either location is undefined, consider them equal
+                });
+            }
+        });
+        return roots;
     }
 
     public loadFromWorkspace(): void {
@@ -162,13 +179,17 @@ export class TreeDataModel {
                     label: root.label,
                     out: root.out,
                     id: root.id,
-                    expanded: root.expanded
+                    expanded: root.expanded,
+                    rank: root.rank
                 }
             });
             this._context.workspaceState.update("treeData.object", JSON.stringify({
                 groupBy: this.groupBy,
                 lastMiniRoots: lastMiniRoots
             }));
+            //since the treeDataModel also modifies the rank of the tags,
+            //we need to save the tags to the workspace too
+            this._tagsController.saveToWorkspace();
         }
     }
 
@@ -183,6 +204,7 @@ export interface RootElement {
     out: boolean; //could be file, style, tagName
     id: string;
     expanded: boolean;
+    rank: number;
     children?: Tag[];
 }
 

@@ -1,4 +1,4 @@
-import { fetch } from 'undici';
+import { fetch, stream } from 'undici';
 import { TextDecoderStream } from 'node:stream/web';
 import { Observable } from 'rxjs';
 
@@ -8,15 +8,19 @@ import { Observable } from 'rxjs';
  * @param apikey of ChatGpt.
  * @returns 
  */
-export async function askToChatGpt(query: string | undefined, apiKey: string): Promise<string> {
+export async function askToChatGpt(model: string, query: string | Array<any>, apiKey: string, temperature: number = 1): Promise<string> {
     try {
         // 👇️ const response: Response
+        if (typeof query === 'string') {
+            query = [{ role: "user", content: query }];
+        }
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             body: JSON.stringify({
-                model: "GPT-4o", //leave it as it is, no reasoning models for this
-                messages: [{ role: "user", content: query }],
-                temperature: 1
+                model: model,
+                messages: query,
+                //temperature: temperature, //not supported by o1
+                stream: false
             }),
             headers: {
                 "Content-Type": 'application/json',
@@ -24,86 +28,84 @@ export async function askToChatGpt(query: string | undefined, apiKey: string): P
             },
         });
 
-        if (!response.ok) {
-            throw new Error(`Error! status: ${response.status}`);
-        }
-
         const result: any = (await response.json());
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
 
         return result.choices[0].message.content;
     } catch (error) {
         if (error instanceof Error) {
             console.log('error message: ', error.message);
-            return error.message;
+            throw error;
         } else {
             console.log('unexpected error: ', error);
-            return 'An unexpected error occurred';
+            throw error;
         }
     }
 }
 
-/**
- * Create asnyc request to ChatGpt api and gets straem.
- * @param question is that want to ask to ChatGpt.
- * @param apikey of ChatGpt.
- * @param temperature.
- * @returns 
- */
-export function askToChatGptAsStream(model: string, query: Array<any> | undefined, apiKey: string, temperature: number): Observable<string> {
 
-    return new Observable<string>(observer => {
-        // 👇️ const response: Response
-        const response = fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            body: JSON.stringify({
-                model: model,
-                messages: query,
-                temperature: Number(temperature),
-                stream: true
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-                authorization: 'Bearer ' + apiKey,
-            },
-        });
+export async function* askToChatGptAsStream( model: string, query: Array<any> | undefined, apiKey: string, temperature: number): AsyncIterable<string> {
 
-        let content = '';
-        response.then(async res => {
-            const textStream = res.body?.pipeThrough(new TextDecoderStream());
-            if (textStream) {
-                for await (const chunk of textStream) {
-                    const eventStr = chunk.split('\n\n');
-                    for (let i = 0; i < eventStr.length; i++) {
-                        const str = eventStr[i];
-                        const jsonStr = str.replace('data: ', '').trim();
-                        if (jsonStr === '[DONE]') {
-                            observer.next('END MESSAGE');
-                        }
-                        try {
-                            const data: any = JSON.parse(jsonStr);
-                            let thisContent
-                            if (data.choices) {
-                                thisContent = data.choices[0].delta?.content || '';
-                            } else { //it could be an error already like the wrong api key.  I want to report it instead of the error about choices[0] that doesn't exist
-                                thisContent = data.error.message
-                            }
-                                content += thisContent;
-                                observer.next(thisContent);
-                        } catch (error) {
-                            if (error instanceof Error) {
-                                console.log('error message: ', error.message);
-                                //the issue I get is the initial data coming back is not valid JSON
-                                //observer.error(error.message);
-                            }
-                        }
-                    }
-                }
-            }
-        }).catch((err: Error) => {
-            observer.error(err?.message);
-        });
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      body: JSON.stringify({
+        model,
+        messages: query,
+        temperature: Number(temperature),
+        stream: true,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        authorization: "Bearer " + apiKey,
+      },
     });
-}
+  
+    // Handle bad status or missing body
+    if (!res.ok || !res.body) {
+      throw new Error(`Request failed with status ${res.status}`);
+    }
+  
+    // Create a streaming text reader
+    const textStream = res.body.pipeThrough(new TextDecoderStream());
+    let errorPart = "";
+  
+    // Read chunks from the stream
+    for await (const chunk of textStream) {
+      // Split into separate events
+      const eventStr = chunk.split("\n\n");
+      for (const str of eventStr) {
+        const jsonStr = str.replace("data: ", "").trim();
+        if (jsonStr === "[DONE]") {
+          // Signal end of message
+          yield "END MESSAGE";
+          continue;
+        }
+        try {
+          const data: any = JSON.parse(jsonStr);
+          // Normal content
+          if (data.choices) {
+            const thisContent = data.choices[0].delta?.content || "";
+            yield thisContent;
+          } else {
+            // API returned an error structure
+            yield data.error.message;
+          }
+        } catch {
+          // The chunk isn't valid JSON yet; accumulate it to see if more chunks form valid JSON
+          errorPart += jsonStr;
+          try {
+            const data: any = JSON.parse(errorPart);
+            throw new Error(data.error.message); // Bubble up as an error
+          } catch {
+            // Still not valid, wait for more
+          }
+        }
+      }
+    }
+  }
 
 export async function promptToTextDavinci003(prompt: string, apikey: string) {
     try {

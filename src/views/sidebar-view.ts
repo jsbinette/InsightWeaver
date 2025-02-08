@@ -121,12 +121,7 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			<div class="flex-container">
 				<button id="api-key-save-button-id">Save</button>
 			</div>
-		
 			<script nonce="${nonce}" src="${scriptUri}"></script>
-			<div class="model">
-				<p> Chat model:<a href="https://platform.openai.com/docs/models"> ${'gpt-4o'}</a></p>
-				<p> Image model:<a href="https://platform.openai.com/docs/models/dall-e"> ${'DALL·E'}</a></p>
-			<div>
 			</body>
 			</html>`;
 	}

@@ -21,6 +21,7 @@ body {
     /*margin: 0;
     background-color: var(--vscode-editor-background);*/
 }
+
 body.tree {
     padding: 0;
     margin: 0;
@@ -128,7 +129,8 @@ textarea::placeholder {
 
 .code {
     white-space: pre-wrap;
-    color: #88b2cb; /* #cccccc */
+    color: #88b2cb;
+    /* #cccccc */
     background-color: transparent;
     padding: 0px;
 }
@@ -239,23 +241,65 @@ div.desc {
 }
 
 .top-section {
-    flex-grow: 1; /* This makes the top section fill the available space */
-    overflow-y: auto; /* Add scroll if content overflows */
+    flex-grow: 1;
+    /* This makes the top section fill the available space */
+    overflow-y: auto;
+    /* Add scroll if content overflows */
     padding: 10px;
 }
 
 .bottom-section {
     /* Set a fixed height for the footer */
-    height: 140px; /* Adjust as needed */
+    height: 160px;
+    /* Adjust as needed */
 }
 
 .red {
     color: red;
 }
 
+.rootLabel {
+    vertical-align: top;
+}
+
+.codicon-checkbox {
+    display: inline-flex;
+    align-items: center;
+  }
+  /*
+  .codicon-checkbox input[type="checkbox"] {
+    appearance: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .codicon-checkbox .codicon {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    line-height: 20px; 
+    text-align: center;
+    border: 1px solid red;
+    border-radius: 3px;
+    margin-right: 4px;
+    font-size: x-small;
+    color: transparent;
+  }
+  
+  .codicon-checkbox input[type="checkbox"]:checked + .codicon {
+    color: #666; 
+    border-color: #666;
+  }
+    */.codicon-check {
+        visibility:collapse ;
+        width: 0px;
+    }
+
 .child-container li {
     display: flex;
 }
+
 .toggle {
     width: 16px;
     height: 16px;
@@ -267,18 +311,22 @@ div.desc {
     flex-shrink: 0;
     cursor: pointer;
 }
+
 ul.tree {
     margin: 0;
     padding: 0;
 }
+
 ul.tree li {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
+
 li {
     white-space: nowrap;
 }
+
 label {
     display: inline-flex;
     align-items: center;
@@ -286,23 +334,29 @@ label {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    flex: 1;                /* use remaining space for label text */
+    flex: 1;
+    /* use remaining space for label text */
 }
+
 label input[type="checkbox"] {
-    margin-right: 8px;
+    margin-right: 4px;
     flex-shrink: 0;
 }
-li.grayed-out{
+
+li.grayed-out {
     opacity: 0.5;
 }
+
 /* Child container is hidden unless expanded */
 .child-container {
     display: none;
     padding-left: 38px;
 }
-li.expanded > .child-container {
+
+li.expanded>.child-container {
     display: block;
 }
+
 select {
     width: 100%;
     padding: var(--input-padding-vertical) var(--input-padding-horizontal);
@@ -315,30 +369,37 @@ select {
     color: #1874e2;
     padding-right: 4px;
 }
+
 .green-style {
     color: #10a37f;
     padding-right: 4px;
 }
+
 .purple-style {
     color: #C679E0;
     padding-right: 4px;
 }
+
 .red-style {
     color: #F44336;
     padding-right: 4px;
 }
+
 .brown-style {
     color: #cc6d2e;
     padding-right: 4px;
 }
+
 .sky-style {
     color: #03A9F4;
     padding-right: 4px;
 }
+
 .lime-style {
     color: #CDDC39;
     padding-right: 4px;
 }
+
 .yellow-style {
     color: #cdb116;
     padding-right: 4px;

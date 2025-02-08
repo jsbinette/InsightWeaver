@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from 'fs';
 import * as path from 'path';
 import { getStoreData, getNonce, getAsWebviewUri, setHistoryData, getVSCodeUri, getHistoryData, setChatData, getChatData, getExtensionConfig } from "../utilities/utility.service";
-import { askToChatGptAsStream } from "../utilities/chat-gpt-api.service";
+import { askToChatGptAsStream, askToChatGpt } from "../utilities/chat-gpt-api.service";
 import { TagsController } from '../utilities/tagsController';
 import { InstructionsController } from "../utilities/instructionsController";
 
@@ -123,6 +123,17 @@ export class ChatGptPanel {
                         this._askToChatGpt(message.data);
                         this.addHistoryToStore(message.data);
                         return;
+                    case "press-ask-no-stream-button":
+                        let instructions2 = await ChatGptPanel._instructionsController.getInstructions()
+                        this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions2.length });
+                        if (instructions2.length > 120000) {
+                            //vscode.window.showInformationMessage('Instrucitons too long');
+                            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Instrucitons too long' });
+                            return;
+                        }
+                        this._askToChatGpt(message.data, instructions2, false);
+                        this.addHistoryToStore(message.data);
+                        break;
                     case "history-question-clicked":
                         this.clickHistoryQuestion(message.data);
                         break;
@@ -180,6 +191,7 @@ export class ChatGptPanel {
             <p class="answer-header"> Chat: </p>            
             <pre class="pre"><code class="code" id="answers-id"></code></pre>
             </div>
+            <p id="error-message" class="red" style="display:none"></p> 
             <div class="bottom-section">
             <div class="text-area mt-20">
                 <label>Question:</label>
@@ -188,13 +200,13 @@ export class ChatGptPanel {
             <div class="flex-container" style="margin-bottom:15px">
               <vscode-button id="ask-button-id">Ask</vscode-button>
               <vscode-button id="ask-no-instructions-button-id">Ask (No instructions)</vscode-button>
+              <vscode-button id="ask-no-stream-button-id">Ask (No Stream)</vscode-button>
               <vscode-button class="danger" id="clear-button-id">Clear</vscode-button>
               <vscode-button class="grayish" id="show-history-button">Show History</vscode-button>
               <vscode-button class="grayish" id="clear-history-button">Clear History</vscode-button>
               <vscode-button id="show-instructions-button" class="instruction-button">Show Instructions</vscode-button>
               <div id="instructions-character-count"></div>
               <vscode-progress-ring id="progress-ring-id" class="progress-ring"></vscode-progress-ring>
-              <p id="error-message" class="red" style="display:none"></p> 
             </div>
             <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
           </body>
@@ -219,7 +231,7 @@ export class ChatGptPanel {
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
      * @param question :string
      */
-    private _askToChatGpt(question: string, developercontent: string = "") {
+    private _askToChatGpt(question: string, developercontent: string = "", asStream = true) {
         if (question == undefined || question == null || question == '') {
             //vscode.window.showInformationMessage('Please enter a question!');
             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please enter a question!' });
@@ -253,17 +265,45 @@ export class ChatGptPanel {
             }
             messages.push(questionMessage);
             setChatData(this._context, messages);
-            askToChatGptAsStream(existModel, messages, existApiKey, existTemperature).subscribe(answer => {
-                //check for 'END MESSAGE' string, 
-                if (answer == 'END MESSAGE') {
-                    var chatData = getChatData(this._context);
-                    chatData.push(asssistantResponse);
-                    setChatData(this._context, chatData);
-                } else {
-                    asssistantResponse.content += answer;
-                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'answer', data: answer });
-                }
-            });
+            if (asStream) {
+                async function handleChat(context: vscode.ExtensionContext, model: string, query: Array<any> | undefined, apiKey: string, temperature: number) {
+                    try {
+                      let content = "";
+                      for await (const answer of askToChatGptAsStream(existModel, messages, existApiKey, existTemperature)) {
+                        if (answer === "END MESSAGE") {
+                          // Save final content
+                          const chatData = getChatData(context);
+                          chatData.push({ content });
+                          setChatData(context, chatData);
+                        } else {
+                          content += answer;
+                          ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                            command: "answer",
+                            data: answer,
+                          });
+                        }
+                      }
+                    } catch (error) {
+                      console.error("(JSB Backend) Error occurred:", error);
+                      ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                        command: "error-message",
+                        data: String(error),
+                      });
+                    }
+                  }
+                  
+                  handleChat(this._context, existModel, messages, existApiKey, existTemperature);
+            } else {
+                askToChatGpt(existModel, messages, existApiKey, existTemperature).then(data => {
+                    asssistantResponse.content += data;
+                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'answer', data: data });
+                })
+                .catch( error => {
+                    // Handle the error here
+                    console.error('(JSB Backend) Error occurred:', error);
+                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: error });
+                });
+            }
         }
     }
 

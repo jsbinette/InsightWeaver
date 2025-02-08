@@ -33,6 +33,7 @@ const instructions = document.getElementById("instructions-id") as HTMLElement;
 const chatQuestionTextArea = document.getElementById("question-text-id") as TextArea;
 const askButton = document.getElementById("ask-button-id") as Button;
 const asknoinstrButton = document.getElementById("ask-no-instructions-button-id") as Button;
+const asknoStreamButton = document.getElementById("ask-no-stream-button-id") as Button;
 const clearButton = document.getElementById("clear-button-id") as Button;
 const showHistoryButton = document.getElementById("show-history-button");
 const clearHistoryButton = document.getElementById("clear-history-button");
@@ -54,11 +55,12 @@ function main() {
     // Add the eventLsteners.
     askButton?.addEventListener("click", handleAskClick);
     asknoinstrButton?.addEventListener("click", handleAskNoInstrClick);
+    asknoStreamButton?.addEventListener("click", handleAskNoStreamClick);
     clearButton?.addEventListener("click", handleClearClick);
     showHistoryButton?.addEventListener("click", handleShowHistoryButtonClick);
     clearHistoryButton?.addEventListener("click", handleClearHistoryButtonClick);
     showInstructionsButton?.addEventListener("click", handleShowInstructionsButtonClick);
-
+    debugger;
     // image button events
     askImageButton?.addEventListener("click", handleImageAskClick);
     clearImageButton?.addEventListener("click", handleImageClearClick);
@@ -173,6 +175,28 @@ function handleAskNoInstrClick() {
     addHistory(chatQuestionTextArea.value);
     chatQuestionTextArea.value = ''
 
+}
+
+function handleAskNoStreamClick() {
+    showProgressRing();
+    // Send messages to Panel.
+    vscode.postMessage({
+        command: "press-ask-no-stream-button",
+        data: chatQuestionTextArea.value,
+    });
+
+    var data = document.createElement('div');
+    data.className = 'userChatLog'
+    data.addEventListener('click', () => {
+        onHistoryClicked(chatQuestionTextArea.value);
+    });
+    data.appendChild(document.createTextNode(chatQuestionTextArea.value));
+    answer?.appendChild(data);
+    // Clear answer filed.
+    //answer.innerHTML = '';
+
+    addHistory(chatQuestionTextArea.value);
+    chatQuestionTextArea.value = ''
 }
 
 /**
@@ -395,7 +419,6 @@ function handleImageClearClick() {
 function showErrorMessage(message: string) {
     const pError = document.getElementById('error-message') as any;
     if (message == '') {
-        
         pError?.style.setProperty("display", "none")
         return;
     }

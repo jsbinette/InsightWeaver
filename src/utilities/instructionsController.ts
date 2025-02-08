@@ -37,9 +37,11 @@ export class InstructionsController {
             //filter tags to find tagName = @out-file
             const outFileTags = allTags.filter(tag => tag.tagName === '@out-file');
             //filter out of outTags all the tags that have resourse (URI) that are present in outFileTags
-            let instructionsTags = allTags.filter(tag => !outFileTags.some(outTag => outTag.resource === tag.resource));
+            let instructionsTags = allTags.filter(tag => !outFileTags.some(outTag => outTag.resource.fsPath == tag.resource.fsPath));
             //filter out of instructionsTags all the tags that have out = true
-            instructionsTags = instructionsTags.filter(tag => !tag.out);
+            //NOT! The outs are handled like in the treeView,
+            //We need to filter the tagName = @out and the text from the other tags is space only.
+            instructionsTags = instructionsTags.filter(tag => !(tag.tagName == '@out'));
 
             //summary tags should be handled here later
 
@@ -80,7 +82,7 @@ export class InstructionsController {
             // Update the summary
             fs.writeFileSync(summarySourcePath, text);
             const storeData = getStoreData(this._context);
-            const summary = await askToChatGpt(`Please summarize the following text: '''${text}''' The length of the summary should be ${orig_ratio} of the original text. Output only the summary but keep the title.  Following the title add in parenthesis (Summary ratio ${orig_ratio}) to indicate this is a summary. You can use markdown to format the summary.`, storeData.apiKey);
+            const summary = await askToChatGpt(storeData.model, `Please summarize the following text: '''${text}''' The length of the summary should be ${orig_ratio} of the original text. Output only the summary but keep the title.  Following the title add in parenthesis (Summary ratio ${orig_ratio}) to indicate this is a summary. You can use markdown to format the summary.`, storeData.apiKey);
             fs.writeFileSync(summaryFilePath, summary);
         }
 
