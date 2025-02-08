@@ -42,6 +42,9 @@ export class InstructionsController {
             //NOT! The outs are handled like in the treeView,
             //We need to filter the tagName = @out and the text from the other tags is space only.
             instructionsTags = instructionsTags.filter(tag => !(tag.tagName == '@out'));
+            //filter th tags that are out
+            instructionsTags = instructionsTags.filter(tag => !tag.out);
+
 
             //summary tags should be handled here later
 
