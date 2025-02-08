@@ -38,14 +38,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(SideBarViewProvider.viewType, provider, { webviewOptions: { retainContextWhenHidden: true } })
 	);
 
-	function refreshAllTags(): void {
-		Object.keys(tagsController.tags).forEach((uri) => {
-			vscode.workspace.openTextDocument(vscode.Uri.parse(uri)).then((document) => {
-				tagsController.updateTags(document);
-			});
-		});
-	}
-
 	// Context Menu Commands
 	const storeData = getStoreData(context);
 	registerContextMenuCommands(storeData.apiKey);
@@ -63,8 +55,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.refresh', () => {
-			refreshAllTags();
+		vscode.commands.registerCommand('instructions-manager.refresh', async () => {
+			await tagsController.scanWorkspace();
 			treeWebviewProvider.refresh();
 		})
 	);
@@ -93,10 +85,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", (selectedChoice: string) => {
+		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", async (selectedChoice: string) => {
 			treeDataModel.changeGoupBy(selectedChoice);
-			refreshAllTags();
-			//treeDataProvider.refresh();
+			await tagsController.scanWorkspace();
 			treeWebviewProvider.refresh();
 		})
 	);
@@ -248,7 +239,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	/** Module Initialization */
-	refreshAllTags();
+	await tagsController.scanWorkspace();
 	treeWebviewProvider.refresh();
 	onDidChange();
 

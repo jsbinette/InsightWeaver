@@ -444,7 +444,7 @@ export class TagsController {
                 if (isTextFile(file.fsPath)) {
                     try {
                         const document = await vscode.workspace.openTextDocument(file);
-                        this.updateTags(document);
+                         await this.updateTags(document);
                     } catch (err) {
                         console.error(err);
                     }
