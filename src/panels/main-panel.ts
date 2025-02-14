@@ -111,7 +111,7 @@ export class ChatGptPanel {
                     case "press-ask-button":
                         let instructions = await ChatGptPanel._instructionsController.getInstructions()
                         this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
-                        if (instructions.length > 120000) {
+                        if (instructions.length > 200000) {
                             //vscode.window.showInformationMessage('Instrucitons too long');
                             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Instrucitons too long' });
                             return;
@@ -123,10 +123,10 @@ export class ChatGptPanel {
                         this._askToChatGpt(message.data);
                         this.addHistoryToStore(message.data);
                         return;
-                    case "press-ask-no-stream-button":
+                    case "press-ask-button-no-stream":
                         let instructions2 = await ChatGptPanel._instructionsController.getInstructions()
                         this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions2.length });
-                        if (instructions2.length > 120000) {
+                        if (instructions2.length > 200000) {
                             //vscode.window.showInformationMessage('Instrucitons too long');
                             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Instrucitons too long' });
                             return;
@@ -176,7 +176,7 @@ export class ChatGptPanel {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'self' 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'self' 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource} blob: https:; script-src 'nonce-${nonce}';">
             <link href="${styleVSCodeUri}" rel="stylesheet">
             <link rel="icon" type="image/jpeg" href="${logoMainPath}">
           </head>
@@ -193,8 +193,11 @@ export class ChatGptPanel {
             </div>
             <p id="error-message" class="red" style="display:none"></p> 
             <div class="bottom-section">
-            <div class="text-area mt-20">
+            <div class="text-area mt-20"  id="drag-drop-area">
                 <label>Question:</label>
+                <div id="file-list-container" class="drag-drop-label">
+                    <ul id="file-list" style="list-style: none; padding: 0;"></ul>
+                </div>
                 <textarea id="question-text-id" class="question-text" rows="3" cols="100"></textarea>
             </div>
             <div class="flex-container" style="margin-bottom:15px">
@@ -219,7 +222,7 @@ export class ChatGptPanel {
      * @param hisrtoryQuestion :string
      */
     public clickHistoryQuestion(hisrtoryQuestion: string) {
-        this._askToChatGpt(hisrtoryQuestion);
+        this._askToChatGpt([{ type: "text", text: hisrtoryQuestion }]);
     }
 
     public sendHistoryAgain() {
@@ -229,10 +232,10 @@ export class ChatGptPanel {
 
     /**
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
-     * @param question :string
      */
-    private _askToChatGpt(question: string, developercontent: string = "", asStream = true) {
-        if (question == undefined || question == null || question == '') {
+    private _askToChatGpt(content: ContentItem[], developercontent: string = "", asStream = true) {
+        const textItem = content.find(item => item.type === "text") as { type: "text"; text: string } | undefined;
+        if (!textItem || !textItem.text.trim()) {
             //vscode.window.showInformationMessage('Please enter a question!');
             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please enter a question!' });
             return;
@@ -254,7 +257,7 @@ export class ChatGptPanel {
         }
         else {
             // make the message
-            let questionMessage = { role: "user", content: question };
+            let questionMessage = { role: "user", content: content };
             // get previous messages
             let messages = getChatData(this._context);
             //if it's empty this is where we add the developer message
@@ -273,7 +276,8 @@ export class ChatGptPanel {
                         if (answer === "END MESSAGE") {
                           // Save final content
                           const chatData = getChatData(context);
-                          chatData.push({ content });
+                          asssistantResponse.content = content; 
+                          chatData.push(asssistantResponse);
                           setChatData(context, chatData);
                         } else {
                           content += answer;
@@ -334,3 +338,7 @@ export class ChatGptPanel {
     }
 
 }
+
+type ContentItem =
+    | { type: "text"; text: string }
+    | { type: "image_url"; image_url: { url: string } };

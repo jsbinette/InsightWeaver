@@ -47,13 +47,13 @@ export async function askToChatGpt(model: string, query: string | Array<any>, ap
 }
 
 
-export async function* askToChatGptAsStream( model: string, query: Array<any> | undefined, apiKey: string, temperature: number): AsyncIterable<string> {
+export async function* askToChatGptAsStream( model: string, messages: Array<any> | undefined, apiKey: string, temperature: number): AsyncIterable<string> {
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       body: JSON.stringify({
         model,
-        messages: query,
+        messages: messages,
         temperature: Number(temperature),
         stream: true,
       }),
@@ -64,8 +64,12 @@ export async function* askToChatGptAsStream( model: string, query: Array<any> | 
     });
   
     // Handle bad status or missing body
+    // We prefer to get the whole error in stream lower down
     if (!res.ok || !res.body) {
-      throw new Error(`Request failed with status ${res.status}`);
+      //throw new Error(`Request failed with status ${res.status}`);
+    }
+    if (res.body === null) {
+        throw new Error("Response body is null");
     }
   
     // Create a streaming text reader
@@ -91,7 +95,7 @@ export async function* askToChatGptAsStream( model: string, query: Array<any> | 
             yield thisContent;
           } else {
             // API returned an error structure
-            yield data.error.message;
+            throw new Error(data.error.message);
           }
         } catch {
           // The chunk isn't valid JSON yet; accumulate it to see if more chunks form valid JSON
@@ -99,8 +103,16 @@ export async function* askToChatGptAsStream( model: string, query: Array<any> | 
           try {
             const data: any = JSON.parse(errorPart);
             throw new Error(data.error.message); // Bubble up as an error
-          } catch {
+          } catch (err) {
             // Still not valid, wait for more
+            // I need to rethrow the error I created above though
+            //so I don't do anything if it's a JSON.parse error but I throw my 
+            //own error if it's not a JSON.parse error
+            if (err instanceof SyntaxError) {
+              continue;
+            } else {
+              throw err;
+            }
           }
         }
       }

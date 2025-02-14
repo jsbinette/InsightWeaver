@@ -53,7 +53,8 @@ export class InstructionsController {
             for (let i = 0; i < instructionsTags.length; i++) {
                 const tag = instructionsTags[i];
                 const document = await vscode.workspace.openTextDocument(tag.resource);
-                instructionChunks.push(document.getText(tag.textBeforeTagRange) + ' ' + document.getText(tag.textAfterTagRange))
+                //remove the tags from the text
+                instructionChunks.push(document.getText(tag.textBeforeTagRange).replace(/@\S+ /g, '') + ' ' + document.getText(tag.textAfterTagRange))
             }
             instructions = instructionChunks.join('\n');
         }

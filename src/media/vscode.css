@@ -123,6 +123,17 @@ textarea::placeholder {
     margin-top: 20px !important;
 }
 
+.drag-drop-label {
+    padding-left: 2em;
+    font-size: smaller;
+    color: #707070;
+}
+
+.drag-over {
+    border: 2px dashed #555;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
 .mt-30 {
     margin-top: 30px !important;
 }
@@ -265,8 +276,9 @@ div.desc {
 .codicon-checkbox {
     display: inline-flex;
     align-items: center;
-  }
-  /*
+}
+
+/*
   .codicon-checkbox input[type="checkbox"] {
     appearance: none;
     position: absolute;
@@ -291,10 +303,11 @@ div.desc {
     color: #666; 
     border-color: #666;
   }
-    */.codicon-check {
-        visibility:collapse ;
-        width: 0px;
-    }
+    */
+.codicon-check {
+    visibility: collapse;
+    width: 0px;
+}
 
 .child-container li {
     display: flex;

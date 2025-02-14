@@ -31,6 +31,7 @@ vscode.postMessage({
 const answer = document.getElementById("answers-id") as HTMLElement;
 const instructions = document.getElementById("instructions-id") as HTMLElement;
 const chatQuestionTextArea = document.getElementById("question-text-id") as TextArea;
+const dropArea = document.getElementById('drag-drop-area') as HTMLElement;
 const askButton = document.getElementById("ask-button-id") as Button;
 const asknoinstrButton = document.getElementById("ask-no-instructions-button-id") as Button;
 const asknoStreamButton = document.getElementById("ask-no-stream-button-id") as Button;
@@ -44,6 +45,15 @@ const characterCount = document.getElementById("instructions-character-count") a
 const askImageButton = document.getElementById("ask-image-button-id") as Button;
 const promptTextArea = document.getElementById("prompt-text-id") as TextArea;
 const clearImageButton = document.getElementById("clear-image-button-id") as Button;
+
+let noStream = false;
+
+//for drag and drop
+let droppedFiles: File[] = [];
+renderFileList()
+type ContentItem =
+    | { type: "text"; text: string }
+    | { type: "image_url"; image_url: { url: string } };
 
 /**
  * Main function
@@ -60,19 +70,40 @@ function main() {
     showHistoryButton?.addEventListener("click", handleShowHistoryButtonClick);
     clearHistoryButton?.addEventListener("click", handleClearHistoryButtonClick);
     showInstructionsButton?.addEventListener("click", handleShowInstructionsButtonClick);
-    debugger;
     // image button events
     askImageButton?.addEventListener("click", handleImageAskClick);
     clearImageButton?.addEventListener("click", handleImageClearClick);
-
     // chat enter event
     chatQuestionTextArea?.addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            // Trigger the button element with a click
-            handleAskClick();
+        /* if (event.key === "Enter") {
+             event.preventDefault();
+             // Trigger the button element with a click
+             handleAskClick();
+         }*/
+    });
+
+    dropArea.addEventListener("dragover", (event: DragEvent) => {
+        event.preventDefault();
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = "copy";
+        }
+        dropArea.classList.add("drag-over");
+    });
+
+    dropArea.addEventListener("dragleave", (_event: DragEvent) => {
+        dropArea.classList.remove("drag-over");
+    });
+
+    dropArea.addEventListener("drop", (event: DragEvent) => {
+        event.preventDefault();
+        dropArea.classList.remove("drag-over");
+        if (event.dataTransfer) {
+            const newFiles = Array.from(event.dataTransfer.files);
+            droppedFiles = droppedFiles.concat(newFiles);
+            renderFileList()
         }
     });
+
 
     // image enter event
     promptTextArea?.addEventListener("keypress", function (event) {
@@ -132,26 +163,74 @@ function main() {
 /**
  * Handle ask button click event.
  */
-function handleAskClick() {
+function handleAskClick(): void {
     showProgressRing();
-    // Send messages to Panel.
-    vscode.postMessage({
-        command: "press-ask-button",
-        data: chatQuestionTextArea.value,
-    });
+    const textContent: ContentItem = { type: "text", text: chatQuestionTextArea.value };
 
-    var data = document.createElement('div');
-    data.className = 'userChatLog'
-    data.addEventListener('click', () => {
+    // If there are files, encode them all, otherwise just build the payload with text.
+    if (droppedFiles.length > 0) {
+        // Encode all dropped image files.
+        const encodePromises = droppedFiles.map((file) => encodeImageFileToBase64(file));
+
+        Promise.all(droppedFiles.map(file => encodeImageFileToBase64(file)))
+            .then((base64Strings: string[]) => {
+                const imageContents: ContentItem[] = base64Strings.map(base64String => ({
+                    type: "image_url",
+                    image_url: { url: base64String },
+                }));
+                const content: ContentItem[] = [textContent, ...imageContents];
+                // Use content here.
+                vscode.postMessage({
+                    command: "press-ask-button" + (noStream ? "-no-stream" : ""),
+                    data: content,
+                });
+                noStream = false;
+                droppedFiles = [];
+                renderFileList()
+            })
+            .catch(error => console.error("Error encoding files:", error));
+    } else {
+        const content: ContentItem[] = [textContent]
+        vscode.postMessage({
+            command: "press-ask-button" + (noStream ? "-no-stream" : ""),
+            data: content,
+        });
+        noStream = false;
+        droppedFiles = [];
+        renderFileList()
+    }
+
+    const data = document.createElement("div");
+    data.className = "userChatLog";
+    const questionSpan = document.createElement("span");
+    questionSpan.textContent = chatQuestionTextArea.value;
+    questionSpan.addEventListener("click", () => {
         onHistoryClicked(chatQuestionTextArea.value);
     });
-    data.appendChild(document.createTextNode(chatQuestionTextArea.value));
+    data.appendChild(questionSpan);
+    if (droppedFiles.length > 0) {
+        droppedFiles.forEach((file) => {
+            if (file.type.startsWith("image/")) {
+                const img = document.createElement("img");
+                const objectUrl = URL.createObjectURL(file);
+                img.src = objectUrl;
+                img.style.maxWidth = "100px";
+                img.style.maxHeight = "100px";
+                img.style.margin = "5px";
+                img.style.cursor = "pointer";
+                //not practical to download the image.
+                //have to encode base64 and send it to the extension
+                //and then the extension can save it to the disk
+                //and then it opens the temp file.  burk.
+
+                data.appendChild(img);
+            }
+        });
+    }
     answer?.appendChild(data);
-    // Clear answer filed.
-    //answer.innerHTML = '';
 
     addHistory(chatQuestionTextArea.value);
-    chatQuestionTextArea.value = ''
+    chatQuestionTextArea.value = "";
 }
 
 function handleAskNoInstrClick() {
@@ -159,7 +238,7 @@ function handleAskNoInstrClick() {
     // Send messages to Panel.
     vscode.postMessage({
         command: "press-ask-no-instr-button",
-        data: chatQuestionTextArea.value,
+        data: [{ type: "text", text: chatQuestionTextArea.value }],
     });
 
     var data = document.createElement('div');
@@ -178,25 +257,84 @@ function handleAskNoInstrClick() {
 }
 
 function handleAskNoStreamClick() {
-    showProgressRing();
-    // Send messages to Panel.
-    vscode.postMessage({
-        command: "press-ask-no-stream-button",
-        data: chatQuestionTextArea.value,
-    });
+    noStream = true;
+    handleAskClick();
+}
 
-    var data = document.createElement('div');
-    data.className = 'userChatLog'
-    data.addEventListener('click', () => {
-        onHistoryClicked(chatQuestionTextArea.value);
+function encodeImageFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        if (!file.type.startsWith("image/")) {
+            reject(new Error("Provided file is not an image."));
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result;
+            if (typeof result === "string") {
+                // FileReader.readAsDataURL already includes the proper MIME prefix.
+                resolve(result);
+            } else {
+                reject(new Error("Failed to convert image to Base64."));
+            }
+        };
+        reader.onerror = () => {
+            reject(new Error("Error reading the image file."));
+        };
+        reader.readAsDataURL(file);
     });
-    data.appendChild(document.createTextNode(chatQuestionTextArea.value));
-    answer?.appendChild(data);
-    // Clear answer filed.
-    //answer.innerHTML = '';
+}
 
-    addHistory(chatQuestionTextArea.value);
-    chatQuestionTextArea.value = ''
+function renderFileList() {
+    const fileList = document.getElementById("file-list");
+    if (!fileList) {
+        return;
+    }
+    fileList.innerHTML = "";
+
+    if (droppedFiles.length === 0) {
+        fileList.textContent = "Drag-and-drop supported.";
+        return;
+    }
+
+    droppedFiles.forEach((file, index) => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.padding = "4px 8px";
+        li.style.borderBottom = "1px solid #ccc";
+
+        // Create a 64x64 thumbnail.
+        const img = document.createElement("img");
+        if (file.type.startsWith("image/")) {
+            img.src = URL.createObjectURL(file);
+        } else {
+            img.src = "path/to/default-64x64-icon.png"; // Replace with your default icon path.
+        }
+        img.width = 64;
+        img.height = 64;
+        img.style.marginRight = "10px";
+        li.appendChild(img);
+
+        // Display file name.
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        li.appendChild(nameSpan);
+
+        // Create a removal button.
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "X";
+        removeBtn.style.marginLeft = "auto";
+        removeBtn.style.cursor = "pointer";
+        removeBtn.addEventListener("click", () => {
+            // Remove the file from the array.
+            droppedFiles.splice(index, 1);
+            // Re-render the file list.
+            renderFileList();
+        });
+        li.appendChild(removeBtn);
+
+        fileList.appendChild(li);
+    });
 }
 
 /**
@@ -241,13 +379,13 @@ function handleClearHistoryButtonClick() {
 
 function handleShowInstructionsButtonClick() {
     const el = document.getElementById('instructions-id');
-    if (el?.style.getPropertyValue("display") == "none")  {
+    if (el?.style.getPropertyValue("display") == "none") {
         showProgressRing();
         vscode.postMessage({ command: 'show-instructions-set' });
         el?.style.setProperty("display", "block")
     }
     else el?.style.setProperty("display", "none")
-    
+
     const el2 = document.getElementById('instructions-header');
     if (el2?.style.getPropertyValue("display") == "none") el2?.style.setProperty("display", "block")
     else el2?.style.setProperty("display", "none")
