@@ -29,17 +29,20 @@ export class TagsController {
         this._tags.forEach(tag => tag.outStyle = outStyleTags.some(outTag => outTag.style === tag.style));
         const outTagNameTags = this._tags.filter(tag => tag.tagName === '@out-tagName');
         this._tags.forEach(tag => tag.outTagName = outTagNameTags.some(outTag => outTag.tagName === tag.tagName));
+        //same thing for @out-line
+        const outLineTags = this._tags.filter(tag => tag.tagName === '@out-line');
+        //for each @out-line tag, set the outLine property to true for all the tags that have the same resource ON THE SAME line as the @out-line tag
+        this._tags.forEach(tag => tag.outLine = outLineTags.some(outTag => outTag.resource === tag.resource && outTag.location.range.start.line === tag.location.range.start.line));
 
         //we can then filter out the @out-file tags to show
-        let tagsToShow = this._tags.filter(tag => !['@out-file', '@out-style', '@out-tagName'].includes(tag.tagName));
-
+        let tagsToShow = this._tags.filter(tag => !['@out-file', '@out-line', '@out-style', '@out-tagName'].includes(tag.tagName));
+        //sort the tags by ressource and order by location.range.start
+        let tags = tagsToShow.sort((a, b) => a.resource.fsPath.localeCompare(b.resource.fsPath) || a.location.range.start.compareTo(b.location.range.start));
         //for any @out tag, set the out property of the preceding tag out property to true
-        for (let i = 0; i < tagsToShow.length; i++) {
-            if (tagsToShow[i].tagName === '@out') {
-                //filter the tags by ressource and order by location.range.start
-                let tags = tagsToShow.filter(tag => tag.resource === tagsToShow[i].resource).sort((a, b) => a.location.range.start.compareTo(b.location.range.start));
+        for (let i = 0; i < tags.length; i++) {
+            if (tags[i].tagName === '@out') {
                 //find the index of the current tag
-                let index = tags.indexOf(this._tags[i]);
+                let index = tags.indexOf(tags[i]);
                 //if the index is not the first one, set the out property of the preceding tag to true
                 if (index > 0) {
                     tags[index - 1].out = true;
@@ -47,7 +50,7 @@ export class TagsController {
             }
         }
         //return the tags filtered from the @out tags and order them by rank then by location.range.start
-        return tagsToShow.filter(tag => tag.tagName !== '@out')
+        return tags.filter(tag => tag.tagName !== '@out')
     }
 
     constructor(context: vscode.ExtensionContext) {
@@ -188,7 +191,7 @@ export class TagsController {
                 label = "<div class=\"" + style + "-style\">" + document.getText(new vscode.Range(locations[i].range.start, locations[i].range.end)) + "</div> <span>" + label + "</span>";
             }
             //splice the "@out " or "@out-file " from the label
-            label = label.replace(/@out /, '').replace(/@out-file /, '');
+            label = label.replace(/@out /, '').replace(/@out-file /, '').replace(/@out-line /, '');
 
             this._tags.push({
                 resource: document.uri,
@@ -200,6 +203,7 @@ export class TagsController {
                 category: style,
                 tagName: locations[i].tagName,
                 out: false,
+                outLine: false,
                 outFile: false,
                 outStyle: false,
                 outTagName: false,
@@ -425,26 +429,26 @@ export class TagsController {
     public async scanWorkspace(): Promise<void> {
         try {
             const files = await vscode.workspace.findFiles(this.includePattern, this.excludePattern, this.maxFilesLimit);
-    
+
             if (!files || files.length === 0) {
                 return;
             }
-    
+
             function isTextFile(filePath: string): boolean {
                 const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
                 const textChars = buffer.toString('utf8').split('').filter(char => {
                     const code = char.charCodeAt(0);
                     return (code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13;
                 });
-    
+
                 return textChars.length / buffer.length > 0.9; // Adjust the threshold as needed
             }
-    
+
             for (const file of files) { // Use for...of to properly await async calls
                 if (isTextFile(file.fsPath)) {
                     try {
                         const document = await vscode.workspace.openTextDocument(file);
-                         await this.updateTags(document);
+                        await this.updateTags(document);
                     } catch (err) {
                         console.error(err);
                     }
@@ -566,6 +570,7 @@ export interface Tag {
     category: string;
     tagName: string;
     out: boolean;
+    outLine: boolean;
     outFile: boolean;
     outStyle: boolean;
     outTagName: boolean;

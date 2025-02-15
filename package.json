@@ -256,7 +256,7 @@
         "instructions-manager.default.words.red": {
           "category": "trigger words",
           "type": "string",
-          "default": "@out[\\s],@out-file[\\s]",
+          "default": "@out[\\s],@out-file[\\s],@out-line[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `red`."
         },
         "instructions-manager.default.words.green": {

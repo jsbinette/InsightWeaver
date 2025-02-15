@@ -81,7 +81,7 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
     private createTagListMarkup(elements: Tag[]): string {
         return elements.map(el => {
             return `
-                <li class="list-item ${el.out ? 'grayed-out' : ''}">
+                <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.outLine ? 'crossed-out' : ''}">
             <label class="codicon-checkbox">
                 <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? '' : 'checked'}/> 
             <span class="codicon codicon-check"></span>

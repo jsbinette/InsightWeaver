@@ -87,6 +87,10 @@ export async function* askToChatGptAsStream( model: string, messages: Array<any>
           yield "END MESSAGE";
           continue;
         }
+        if (jsonStr === "") {
+          // Skip empty lines
+          continue;
+        }
         try {
           const data: any = JSON.parse(jsonStr);
           // Normal content

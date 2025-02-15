@@ -21,7 +21,7 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 // declare an array for search history.
-let searchHistory: string[] = [];
+let searchHistory: string[] | Object[] = [];
 
 vscode.postMessage({
     command: "history-request",
@@ -419,11 +419,23 @@ function updateHistoryList() {
                 spanContainer.appendChild(spanNumber);
 
                 const li = document.createElement('li');
-                li.textContent = content.length > 50 ? content.substring(0, 250) + '...' : content;
+                let contentText: string;
+                if (typeof content === 'string') {
+                    contentText = content;
+                } else if (Array.isArray(content)) { //if content is an array
+                    //new system with content type
+                    let obj = content.find((c) => c.type === 'text');
+                    if (obj) {
+                        contentText = obj.text;
+                    } else {
+                        contentText = '';
+                    }
+                } else contentText = '';
+                li.textContent = contentText.length > 50 ? contentText.substring(0, 250) + '...' : contentText;
                 li.addEventListener('click', () => {
-                    onHistoryClicked(content);
+                    onHistoryClicked(contentText);
                 });
-                li.title = content;
+                li.title = contentText;
                 li.style.cursor = 'pointer';
                 li.style.fontSize = '14px';
                 li.style.listStyleType = 'none';

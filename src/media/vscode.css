@@ -261,7 +261,7 @@ div.desc {
 
 .bottom-section {
     /* Set a fixed height for the footer */
-    height: 160px;
+    height: 180px;
     /* Adjust as needed */
 }
 
@@ -358,6 +358,9 @@ label input[type="checkbox"] {
 
 li.grayed-out {
     opacity: 0.5;
+}
+li.crossed-out {
+    text-decoration: line-through;
 }
 
 /* Child container is hidden unless expanded */
