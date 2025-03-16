@@ -36,7 +36,7 @@ function main() {
                 imageSizeTextField.value = message.data.imageSize;
                 modelSelect.innerHTML = "";
                 // Populate options dynamically
-                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1"];
+                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1","gpt-4.5-preview"];
                 message.data.models.forEach( (optionText:string) => {
                     const optionElement = document.createElement("option");
                     optionElement.value = optionText; // Set the value
