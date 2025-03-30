@@ -99,7 +99,7 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			<p class="p-header mt-20" >General Settings</p>
 			<div class="form-flex-container">
 				<label>Api Key:</label>
-				<input id="api-key-text-field-id" placeholder="OpenAi api key." />							
+				<input type="password" id="api-key-text-field-id" placeholder="OpenAi api key." />
 			</div>		
 			<div class="form-flex-container">
 				<label>Temp:</label>

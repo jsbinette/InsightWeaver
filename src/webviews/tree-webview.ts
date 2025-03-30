@@ -58,18 +58,18 @@ function treeMain() {
         treeLabel.addEventListener('click', () => {
             const id = treeLabel.id;
             treeVscode.postMessage({
-                command: "goToTag",
+                command: "outToggle",
                 args: [id], // Pass text as an argument
             });
         }
         );
     });
 
-    document.querySelectorAll('.treeCheckbox').forEach(treeCheckbox => {
-        treeCheckbox.addEventListener('click', () => {
-            const id = treeCheckbox.id;
+    document.querySelectorAll('.eyeIcon').forEach(eyeIcon => {
+        eyeIcon.addEventListener('click', () => {
+            const id = eyeIcon.id;
             treeVscode.postMessage({
-                command: "outToggle",
+                command: "goToTag",
                 args: [id],
             });
         }

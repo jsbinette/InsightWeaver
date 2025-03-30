@@ -82,12 +82,9 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
         return elements.map(el => {
             return `
                 <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.outLine ? 'crossed-out' : ''}">
-            <label class="codicon-checkbox">
-                <input type="checkbox" id="${el.id}" class="treeCheckbox" ${el.out ? '' : 'checked'}/> 
-            <span class="codicon codicon-check"></span>
-            <label id="${el.id}"  class="treeLabel">${el.label}</label>
-            </label>
-        </li>`;
+                <span class="codicon codicon-eye eyeIcon" id="${el.id}" style="cursor: pointer; margin-right: 6px;"></span>
+                <label id="${el.id}" class="treeLabel">${el.label}</label>
+            </li>`;
         }).join('');
     }
 
