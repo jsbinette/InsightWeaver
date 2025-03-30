@@ -49,6 +49,7 @@ const promptTextArea = document.getElementById("prompt-text-id") as TextArea
 const clearImageButton = document.getElementById("clear-image-button-id") as Button
 const fileList = document.getElementById("file-list") as HTMLElement
 let noStream = false
+let noInstruction = false
 
 //for drag and drop
 let droppedImages: Extract<ContentItem, { type: "image_url" }>[] = []
@@ -168,7 +169,7 @@ function main() {
                             imageContents.forEach((imgObj) => {
                                 const img = document.createElement('img')
                                 img.src = imgObj.image_url.url
-                                img.style.maxWidth = '150px'
+                                //img.style.maxWidth = '150px'
                                 img.style.maxHeight = '150px'
                                 img.style.margin = '5px'
                                 img.style.cursor = 'pointer'
@@ -209,20 +210,20 @@ function handleAskClick(): void {
     const textContent: ContentItem = { type: "text", text: chatQuestionTextArea.value }
     const content: ContentItem[] = [textContent, ...droppedImages]
     vscode.postMessage({
-        command: "press-ask-button" + (noStream ? "-no-stream" : ""),
+        command: (noInstruction ? "press-ask-no-instr-button" : "press-ask-button") + (noStream ? "-no-stream" : ""),
         data: content,
     })
 
     const data = document.createElement("div")
     data.className = "userChatLog"
-    const questionSpan = document.createElement("span")
+    const questionSpan = document.createElement("div")
     questionSpan.textContent = chatQuestionTextArea.value
     questionSpan.addEventListener("click", () => onHistoryClicked(content))
     data.appendChild(questionSpan)
     droppedImages.forEach(item => {
         const img = document.createElement("img")
         img.src = item.image_url.url
-        img.style.maxWidth = "150px"
+        //img.style.maxWidth = "150px"
         img.style.maxHeight = "150px"
         img.style.margin = "5px"
         img.style.cursor = "pointer"
@@ -231,6 +232,7 @@ function handleAskClick(): void {
     answer?.appendChild(data)
 
     noStream = false
+    noInstruction = false
     droppedImages.length = 0
     renderFileList()
     
@@ -239,28 +241,8 @@ function handleAskClick(): void {
 }
 
 function handleAskNoInstrClick() {
-    showProgressRing()
-    // Send messages to Panel.
-    vscode.postMessage({
-        command: "press-ask-no-instr-button",
-        data: [{ type: "text", text: chatQuestionTextArea.value }],
-    })
-
-    var data = document.createElement('div')
-    data.className = 'userChatLog'
-    const textContent: ContentItem = { type: "text", text: chatQuestionTextArea.value }
-    let content: ContentItem[] = [textContent, ...droppedImages]
-    data.addEventListener("click", () => {
-        onHistoryClicked(content)
-    })
-    data.appendChild(document.createTextNode(chatQuestionTextArea.value))
-    answer?.appendChild(data)
-    // Clear answer filed.
-    //answer.innerHTML = ''
-
-    addHistory(content)
-    chatQuestionTextArea.value = ''
-
+    noInstruction = true
+    handleAskClick()
 }
 
 function handleAskNoStreamClick() {
@@ -307,7 +289,7 @@ function renderFileList() {
 
         const img = document.createElement("img")
         img.src = item.image_url.url
-        img.style.maxWidth = "150px"
+        //img.style.maxWidth = "150px"
         img.style.maxHeight = "150px"
         img.style.marginRight = "10px"
         li.appendChild(img)
@@ -404,7 +386,7 @@ function createHistoryElement(htmlElement: HTMLElement, content: ContentItem[]) 
         images.forEach((imgObj) => {
             const img = document.createElement('img')
             img.src = imgObj.image_url.url
-            img.style.maxWidth = '150px'
+            //img.style.maxWidth = '150px'
             img.style.maxHeight = '150px'
             img.style.margin = '5px'
             img.style.cursor = 'pointer'
@@ -443,6 +425,7 @@ function updateHistoryList() {
                 li.style.cursor = 'pointer'
                 li.style.fontSize = '14px'
                 li.style.listStyleType = 'auto'
+                li.style.borderBottom = "1px solid"
                 spanContainer.appendChild(li)
                 ul.appendChild(spanContainer)
             }
