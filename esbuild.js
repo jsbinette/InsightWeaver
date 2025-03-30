@@ -57,6 +57,8 @@ function copyStaticFiles() {
         { src: 'src/media/chat-instruciton-logo.png', dest: 'out/media/chat-instruciton-logo.png' },
         { src: 'src/media/chat-instruciton-logo@4x.png', dest: 'out/media/chat-instruciton-logo@4x.png' },
         { src: 'src/media/vscode.css', dest: 'out/media/vscode.css' },
+        { src: 'src/media/codicon.css', dest: 'out/media/codicon.css' },
+        { src: 'src/media/codicon.ttf', dest: 'out/media/codicon.ttf' },
     ];
 
     staticFiles.forEach(file => {

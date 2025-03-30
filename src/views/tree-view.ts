@@ -35,7 +35,7 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
         if (this._view) {
             const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "tree-webview.js"])
             const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css'])
-            const codiconsUri = getAsWebviewUri(webview, extensionUri, ['node_modules', '@vscode/codicons', 'dist', 'codicon.css'])
+            const codiconsUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'codicon.css'])
             const nonce = getNonce()
             //JSB here is the important part
             const rootElements = this.dataModel.getRoot()
