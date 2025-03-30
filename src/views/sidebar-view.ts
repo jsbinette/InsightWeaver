@@ -105,18 +105,14 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 				<label>Temp:</label>
 				<input id="temperature-text-field-id" placeholder="0.8" title="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic." />				
 			</div>
-			<p class="p-header mt-20">Images Settings</p>
-			<div class="form-flex-container">
-				<label>Response Number:</label>
-				<input id="image-number-text-field-id" placeholder="Number of generated images." title="Smaller sizes are faster to generate. You can request 1-5 images at a time using the n parameter." />							
-			</div>
-			<div class="form-flex-container">
-				<label>Size:</label>
-				<input id="image-size-text-field-id" placeholder="Size of images like '1024x1024'" title="Generated images can have a size of 256x256, 512x512, or 1024x1024 pixels." />							
-			</div>
 			<div class="form-flex-container">
 				<label>Model:</label>
 				<select id="model-select-id"></select>							
+			</div>
+			<p class="p-header mt-20">Images Settings</p>
+			<div class="form-flex-container">
+				<label>Size:</label>
+				<input id="image-size-text-field-id" placeholder="Size of images like '1024x1024'" title="Generated images can have a size of 1024x1024 or 1024x1792 pixels." />							
 			</div>
 			<div class="flex-container">
 				<button id="api-key-save-button-id">Save</button>

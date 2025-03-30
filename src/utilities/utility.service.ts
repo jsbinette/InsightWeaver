@@ -5,21 +5,6 @@ export function getExtensionConfig(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration('instructions-manager');
 }
 
-
-/**
- * Click history question event emitter.
- */
-const clickHistoryQuestionEventEmitter = new EventEmitter();
-export { clickHistoryQuestionEventEmitter }
-
-/**
- * Fire history question event.
- * @param historyQuestion :string 
-*/
-export function FireClickHistoryQuestionEvent(historyQuestion: string) {
-  clickHistoryQuestionEventEmitter.emit('clickHistoryQuestion', historyQuestion);
-}
-
 /**
  * Gets nonce
  * @returns string

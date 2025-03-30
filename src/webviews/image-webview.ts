@@ -38,11 +38,11 @@ function main() {
 
     // image enter event
     promptTextArea?.addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
+        /*if (event.key === "Enter") {
             event.preventDefault();
             // Trigger the button element with a click
             handleImageAskClick();
-        }
+        }*/
     });
 
     try {

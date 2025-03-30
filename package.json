@@ -2,7 +2,7 @@
   "name": "instructions-manager",
   "displayName": "Instructions Manager",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "license": "GPLv3",
   "publisher": "jsbinette",
   "bugs": {

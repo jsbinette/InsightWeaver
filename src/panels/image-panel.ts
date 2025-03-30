@@ -149,18 +149,17 @@ export class ImagePanel {
         const storeData = getStoreData(this._context);
         const existApiKey = storeData.apiKey;
         const existImageSize = storeData.imageSize;
-        const existResponseNumber = storeData.responseNumber;
         if (existApiKey == undefined || existApiKey == null || existApiKey == '') {
             vscode.window.showInformationMessage('Please add your Open Ai api key!');
         } else if (existImageSize == undefined || existImageSize == null || existImageSize == 0) {
             vscode.window.showInformationMessage('Please add image size!');
-        } else if (existResponseNumber == undefined || existResponseNumber == null || existResponseNumber == 0) {
-            vscode.window.showInformationMessage('Please add response number!');
         }
         else {
-            imageGenerationeFromChatGpt(question, existApiKey, existResponseNumber).then(data => {
+            imageGenerationeFromChatGpt(question, existApiKey,existImageSize).then(data => {
 
-                if (data.includes('Error')) {
+                if (data == undefined || data == null) {
+                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Error: No data returned! Some problem of coding.' });
+                } else if (data.includes('Error')) {
                     ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: data });
                 } else {
                     ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'image-urls-answer', data: data });

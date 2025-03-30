@@ -134,9 +134,6 @@ export class ChatGptPanel {
                         this._askToChatGpt(message.data, instructions2, false);
                         this.addHistoryToStore(message.data);
                         break;
-                    case "history-question-clicked":
-                        this.clickHistoryQuestion(message.data);
-                        break;
                     case "history-request":
                         this.sendHistoryAgain();
                         break;
@@ -176,8 +173,7 @@ export class ChatGptPanel {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'self' 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource} blob: https:; script-src 'nonce-${nonce}';">
-            <link href="${styleVSCodeUri}" rel="stylesheet">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'self' 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data: blob: https:; script-src 'nonce-${nonce}'; sandbox allow-scripts allow-popups;"><link href="${styleVSCodeUri}" rel="stylesheet">
             <link rel="icon" type="image/jpeg" href="${logoMainPath}">
           </head>
           <body>        
@@ -188,6 +184,7 @@ export class ChatGptPanel {
 			</ul>
             <p id="instructions-header" class="answer-header" style="display:none"> Instructions: </p>   
             <pre class="pre"><code class="code instructions" id="instructions-id" style="display:none"></code></pre>
+            <div id="instructions-image-container" style="display:none"></div>
             <p class="answer-header"> Chat: </p>            
             <pre class="pre"><code class="code" id="answers-id"></code></pre>
             </div>
@@ -217,23 +214,67 @@ export class ChatGptPanel {
         `;
     }
 
-    /**
-     * Ask history question to ChatGpt and send 'history-question-clicked' command with data to mainview.js.
-     * @param hisrtoryQuestion :string
-     */
-    public clickHistoryQuestion(hisrtoryQuestion: string) {
-        this._askToChatGpt([{ type: "text", text: hisrtoryQuestion }]);
-    }
-
     public sendHistoryAgain() {
         const historyData = getHistoryData(this._context);
         this._panel.webview.postMessage({ command: 'history-data', data: historyData });
     }
 
+
+    private async _injectImageMessagesFromMarkdown(developerContent: string): Promise<ContentItem[]> {
+        function extractImagePathsFromMarkdown(markdown: string): string[] {
+            const imageRegex = /!\[.*?\]\((.*?)\)/g;
+            const matches: string[] = [];
+            let match: RegExpExecArray | null;
+            while ((match = imageRegex.exec(markdown)) !== null) {
+                let path = match[1].trim();
+                // Remove angle brackets if present
+                if (path.startsWith("<") && path.endsWith(">")) {
+                    path = path.slice(1, -1).trim();
+                }
+                // Prepend "./" if no slash
+                if (!path.includes("/")) {
+                    path = `./${path}`;
+                }
+                matches.push(path);
+            }
+            return matches;
+        }
+
+        function encodeFileToBase64(filePath: string): Promise<string> {
+            return new Promise((resolve, reject) => {
+                fs.readFile(filePath, (err, data) => {
+                    if (err) reject(err);
+                    else resolve(`data:image/${path.extname(filePath).slice(1)};base64,${data.toString('base64')}`);
+                });
+            });
+        }
+
+        const imagePaths = extractImagePathsFromMarkdown(developerContent);
+        const contentItems: ContentItem[] = [];
+
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            throw new Error("No workspace is open.");
+        }
+        const rootPath = workspaceFolders[0].uri.fsPath;
+
+        for (const imagePath of imagePaths) {
+            const absolutePath = path.resolve(rootPath, imagePath);
+            try {
+                const base64 = await encodeFileToBase64(absolutePath);
+                contentItems.push({ type: "image_url", image_url: { url: base64 } });
+            } catch (error) {
+                console.error("Failed to load image:", imagePath, error);
+            }
+        }
+
+        return contentItems;
+    }
+
     /**
      * Ask to ChatGpt a question ans send 'answer' command with data to mainview.js.
      */
-    private _askToChatGpt(content: ContentItem[], developercontent: string = "", asStream = true) {
+    private _askToChatGpt(content: ContentItem[], developerContent: string = "", asStream = true) {
         const textItem = content.find(item => item.type === "text") as { type: "text"; text: string } | undefined;
         if (!textItem || !textItem.text.trim()) {
             //vscode.window.showInformationMessage('Please enter a question!');
@@ -256,58 +297,74 @@ export class ChatGptPanel {
             ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Please add model!' });
         }
         else {
-            // make the message
-            let questionMessage = { role: "user", content: content };
             // get previous messages
             let messages = getChatData(this._context);
-            //if it's empty this is where we add the developer message
-            if (messages.length == 0) {
-                if (developercontent != "") {
-                    messages.push({ role: "developer", content: developercontent });
-                }
+            if (messages.length != 0) {
+                developerContent = "";
             }
-            messages.push(questionMessage);
-            setChatData(this._context, messages);
-            if (asStream) {
-                async function handleChat(context: vscode.ExtensionContext, model: string, query: Array<any> | undefined, apiKey: string, temperature: number) {
-                    try {
-                      let content = "";
-                      for await (const answer of askToChatGptAsStream(existModel, messages, existApiKey, existTemperature)) {
-                        if (answer === "END MESSAGE") {
-                          // Save final content
-                          const chatData = getChatData(context);
-                          asssistantResponse.content = content; 
-                          chatData.push(asssistantResponse);
-                          setChatData(context, chatData);
-                        } else {
-                          content += answer;
-                          ChatGptPanel.currentPanel?._panel.webview.postMessage({
-                            command: "answer",
-                            data: answer,
-                          });
-                        }
-                      }
-                    } catch (error) {
-                      console.error("(JSB Backend) Error occurred:", error);
-                      ChatGptPanel.currentPanel?._panel.webview.postMessage({
-                        command: "error-message",
-                        data: String(error),
-                      });
+
+            this._injectImageMessagesFromMarkdown(developerContent).then((imageMessages) => {
+                if (messages.length === 0 && developerContent.length > 0) {
+                    if (imageMessages.length > 0) {
+                        const textContent = { type: "text", text: developerContent };
+                        //this doesn't work yet so I split it instead
+                        //messages.push({ role: "developer", content: [textContent, ...imageMessages] });
+                        messages.push({ role: "developer", content: developerContent });
+                        messages.push({ role: "user", content: [{ type: "text", text: "Here are the images refered in the developer message" }, ...imageMessages] });
+                    } else {
+                        messages.push({ role: "developer", content: developerContent });
                     }
-                  }
-                  
-                  handleChat(this._context, existModel, messages, existApiKey, existTemperature);
-            } else {
-                askToChatGpt(existModel, messages, existApiKey, existTemperature).then(data => {
-                    asssistantResponse.content += data;
-                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'answer', data: data });
-                })
-                .catch( error => {
-                    // Handle the error here
-                    console.error('(JSB Backend) Error occurred:', error);
-                    ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: error });
+                }
+
+                messages.push({ role: "user", content: content });
+                setChatData(this._context, messages);
+                if (asStream) {
+                    async function handleChat(context: vscode.ExtensionContext, model: string, query: Array<any> | undefined, apiKey: string, temperature: number) {
+                        try {
+                            let content = "";
+                            for await (const answer of askToChatGptAsStream(existModel, messages, existApiKey, existTemperature)) {
+                                if (answer === "END MESSAGE") {
+                                    // Save final content
+                                    const chatData = getChatData(context);
+                                    asssistantResponse.content = content;
+                                    chatData.push(asssistantResponse);
+                                    setChatData(context, chatData);
+                                } else {
+                                    content += answer;
+                                    ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                                        command: "answer",
+                                        data: answer,
+                                    });
+                                }
+                            }
+                        } catch (error) {
+                            console.error("(JSB Backend) Error occurred:", error);
+                            ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                                command: "error-message",
+                                data: String(error),
+                            });
+                        }
+                    }
+
+                    handleChat(this._context, existModel, messages, existApiKey, existTemperature);
+                } else {
+                    askToChatGpt(existModel, messages, existApiKey, existTemperature).then(data => {
+                        asssistantResponse.content += data;
+                        ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'answer', data: data });
+                    })
+                        .catch(error => {
+                            // Handle the error here
+                            console.error('(JSB Backend) Error occurred:', error);
+                            ChatGptPanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: error });
+                        });
+                }
+            }).catch(err => {
+                console.error("(JSB Backend) Error loading images:", err);
+                ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                    command: "error-message",
+                    data: String(err),
                 });
-            }
+            });
         }
     }
 
@@ -333,8 +390,22 @@ export class ChatGptPanel {
 
     async showInstuctionSet() {
         let instructions = await ChatGptPanel._instructionsController.getInstructions()
-        this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
-        this._panel.webview.postMessage({ command: 'instructions-data', data: instructions });
+        this._injectImageMessagesFromMarkdown(instructions).then((images) => {
+            this._panel.webview.postMessage({ command: 'upadate-instructions-character-count', data: instructions.length });
+            if (images.length > 0) {
+                const textContent = { type: "text", text: instructions };
+                this._panel.webview.postMessage({ command: 'instructions-data', data: [textContent, ...images] });;
+            } else {
+                this._panel.webview.postMessage({ command: 'instructions-data', data: instructions });
+            }
+        })
+            .catch(err => {
+                console.error("(JSB Backend) Error loading images:", err);
+                ChatGptPanel.currentPanel?._panel.webview.postMessage({
+                    command: "error-message",
+                    data: String(err),
+                });
+            });
     }
 
 }

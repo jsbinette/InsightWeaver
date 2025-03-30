@@ -11,7 +11,6 @@ const imageButton = document.getElementById("image-generate-button");
 const apiKeySaveButton = document.getElementById("api-key-save-button-id") as any;
 const apiKeyTextField = document.getElementById("api-key-text-field-id") as any;
 const temperatureTextField = document.getElementById("temperature-text-field-id") as any;
-const imageNumberTextField = document.getElementById("image-number-text-field-id") as any;
 const imageSizeTextField = document.getElementById("image-size-text-field-id") as any;
 const modelSelect = document.getElementById("model-select-id") as any;
 
@@ -32,7 +31,6 @@ function main() {
             case 'settings-exist':
                 apiKeyTextField.value = message.data.apiKey;
                 temperatureTextField.value = message.data.temperature;
-                imageNumberTextField.value = message.data.responseNumber;
                 imageSizeTextField.value = message.data.imageSize;
                 modelSelect.innerHTML = "";
                 // Populate options dynamically
@@ -81,7 +79,6 @@ function handleSaveClick() {
     const data = {
         apiKey: apiKeyTextField?.value,
         temperature: temperatureTextField?.value,
-        responseNumber: imageNumberTextField?.value,
         imageSize: imageSizeTextField?.value,
         model: modelSelect?.value
     }

@@ -9,6 +9,7 @@ import {
     Button,
     TextArea,
 } from "@vscode/webview-ui-toolkit";
+import { text } from "node:stream/consumers";
 
 /**
  * Register "@vscode/webview-ui-toolkit" component to vscode design system.
@@ -21,7 +22,7 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 // declare an array for search history.
-let searchHistory: string[] | Object[] = [];
+let searchHistory: ContentItem[][] = [];
 
 vscode.postMessage({
     command: "history-request",
@@ -30,6 +31,7 @@ vscode.postMessage({
 // Declare Html elements
 const answer = document.getElementById("answers-id") as HTMLElement;
 const instructions = document.getElementById("instructions-id") as HTMLElement;
+const imageContainer = document.getElementById('instructions-image-container') as HTMLElement;
 const chatQuestionTextArea = document.getElementById("question-text-id") as TextArea;
 const dropArea = document.getElementById('drag-drop-area') as HTMLElement;
 const askButton = document.getElementById("ask-button-id") as Button;
@@ -45,11 +47,11 @@ const characterCount = document.getElementById("instructions-character-count") a
 const askImageButton = document.getElementById("ask-image-button-id") as Button;
 const promptTextArea = document.getElementById("prompt-text-id") as TextArea;
 const clearImageButton = document.getElementById("clear-image-button-id") as Button;
-
+const fileList = document.getElementById("file-list") as HTMLElement;
 let noStream = false;
 
 //for drag and drop
-let droppedFiles: File[] = [];
+let droppedImages: Extract<ContentItem, { type: "image_url" }>[] = []
 renderFileList()
 type ContentItem =
     | { type: "text"; text: string }
@@ -99,11 +101,18 @@ function main() {
         dropArea.classList.remove("drag-over");
         if (event.dataTransfer) {
             const newFiles = Array.from(event.dataTransfer.files);
-            droppedFiles = droppedFiles.concat(newFiles);
-            renderFileList()
+            const encodePromises = newFiles.map(file => encodeImageFileToBase64(file));
+    
+            Promise.all(encodePromises).then(base64Strings => {
+                const newImages: Extract<ContentItem, { type: "image_url" }>[] = base64Strings.map(base64 => ({
+                    type: "image_url",
+                    image_url: { url: base64 }
+                }));
+                droppedImages.push(...newImages);
+                renderFileList();
+            });
         }
     });
-
 
     // image enter event
     promptTextArea?.addEventListener("keypress", function (event) {
@@ -143,7 +152,39 @@ function main() {
                     break;
                 case 'instructions-data':
                     hideProgressRing();
-                    instructions.innerHTML = message.data
+                    imageContainer.innerHTML = ''; // Clear previous images
+                    if (typeof (message.data) === 'string') {
+                        instructions.innerHTML = message.data;
+                    } else {
+                        //message.data is an array of of ojbects, one of them should by of type text
+                        const textContent = message.data.find((c: ContentItem) => c.type === 'text');
+                        if (textContent) {
+                            instructions.innerHTML = textContent.text;
+                        }
+                        const imageContents = (message.data as ContentItem[]).filter(
+                            (c): c is Extract<ContentItem, { type: "image_url" }> => c.type === "image_url"
+                        );
+                        if (imageContents.length > 0) {
+                            imageContents.forEach((imgObj) => {
+                                const img = document.createElement('img');
+                                img.src = imgObj.image_url.url;
+                                img.style.maxWidth = '150px';
+                                img.style.maxHeight = '150px';
+                                img.style.margin = '5px';
+                                img.style.cursor = 'pointer';
+                                //this does not work even thought I have the security setting allow popups because I'm in an iframe.
+                                img.addEventListener('click', () => {
+                                    const newTab = window.open(imgObj.image_url.url, '_blank');
+                                    if (newTab) {
+                                        newTab.focus();
+                                    } else {
+                                        console.error('Failed to open image in new tab');
+                                    }
+                                });
+                                imageContainer.appendChild(img);
+                            });
+                        }
+                    }
                     break;
                 case 'upadate-instructions-character-count':
                     characterCount.textContent = message.data;
@@ -166,70 +207,34 @@ function main() {
 function handleAskClick(): void {
     showProgressRing();
     const textContent: ContentItem = { type: "text", text: chatQuestionTextArea.value };
-
-    // If there are files, encode them all, otherwise just build the payload with text.
-    if (droppedFiles.length > 0) {
-        // Encode all dropped image files.
-        const encodePromises = droppedFiles.map((file) => encodeImageFileToBase64(file));
-
-        Promise.all(droppedFiles.map(file => encodeImageFileToBase64(file)))
-            .then((base64Strings: string[]) => {
-                const imageContents: ContentItem[] = base64Strings.map(base64String => ({
-                    type: "image_url",
-                    image_url: { url: base64String },
-                }));
-                const content: ContentItem[] = [textContent, ...imageContents];
-                // Use content here.
-                vscode.postMessage({
-                    command: "press-ask-button" + (noStream ? "-no-stream" : ""),
-                    data: content,
-                });
-                noStream = false;
-                droppedFiles = [];
-                renderFileList()
-            })
-            .catch(error => console.error("Error encoding files:", error));
-    } else {
-        const content: ContentItem[] = [textContent]
-        vscode.postMessage({
-            command: "press-ask-button" + (noStream ? "-no-stream" : ""),
-            data: content,
-        });
-        noStream = false;
-        droppedFiles = [];
-        renderFileList()
-    }
+    const content: ContentItem[] = [textContent, ...droppedImages];
+    vscode.postMessage({
+        command: "press-ask-button" + (noStream ? "-no-stream" : ""),
+        data: content,
+    });
 
     const data = document.createElement("div");
     data.className = "userChatLog";
     const questionSpan = document.createElement("span");
     questionSpan.textContent = chatQuestionTextArea.value;
-    questionSpan.addEventListener("click", () => {
-        onHistoryClicked(chatQuestionTextArea.value);
-    });
+    questionSpan.addEventListener("click", () => onHistoryClicked(content));
     data.appendChild(questionSpan);
-    if (droppedFiles.length > 0) {
-        droppedFiles.forEach((file) => {
-            if (file.type.startsWith("image/")) {
-                const img = document.createElement("img");
-                const objectUrl = URL.createObjectURL(file);
-                img.src = objectUrl;
-                img.style.maxWidth = "100px";
-                img.style.maxHeight = "100px";
-                img.style.margin = "5px";
-                img.style.cursor = "pointer";
-                //not practical to download the image.
-                //have to encode base64 and send it to the extension
-                //and then the extension can save it to the disk
-                //and then it opens the temp file.  burk.
-
-                data.appendChild(img);
-            }
-        });
-    }
+    droppedImages.forEach(item => {
+        const img = document.createElement("img");
+        img.src = item.image_url.url;
+        img.style.maxWidth = "150px";
+        img.style.maxHeight = "150px";
+        img.style.margin = "5px";
+        img.style.cursor = "pointer";
+        data.appendChild(img);
+    });
     answer?.appendChild(data);
 
-    addHistory(chatQuestionTextArea.value);
+    noStream = false;
+    droppedImages.length = 0;
+    renderFileList();
+    
+    addHistory(content);
     chatQuestionTextArea.value = "";
 }
 
@@ -243,15 +248,17 @@ function handleAskNoInstrClick() {
 
     var data = document.createElement('div');
     data.className = 'userChatLog'
-    data.addEventListener('click', () => {
-        onHistoryClicked(chatQuestionTextArea.value);
+    const textContent: ContentItem = { type: "text", text: chatQuestionTextArea.value };
+    let content: ContentItem[] = [textContent, ...droppedImages];
+    data.addEventListener("click", () => {
+        onHistoryClicked(content);
     });
     data.appendChild(document.createTextNode(chatQuestionTextArea.value));
     answer?.appendChild(data);
     // Clear answer filed.
     //answer.innerHTML = '';
 
-    addHistory(chatQuestionTextArea.value);
+    addHistory(content);
     chatQuestionTextArea.value = ''
 
 }
@@ -285,50 +292,37 @@ function encodeImageFileToBase64(file: File): Promise<string> {
 }
 
 function renderFileList() {
-    const fileList = document.getElementById("file-list");
-    if (!fileList) {
-        return;
-    }
     fileList.innerHTML = "";
-
-    if (droppedFiles.length === 0) {
+    if (droppedImages.length === 0) {
         fileList.textContent = "Drag-and-drop supported.";
         return;
     }
 
-    droppedFiles.forEach((file, index) => {
+    droppedImages.forEach((item, index) => {
         const li = document.createElement("li");
         li.style.display = "flex";
         li.style.alignItems = "center";
         li.style.padding = "4px 8px";
         li.style.borderBottom = "1px solid #ccc";
 
-        // Create a 64x64 thumbnail.
         const img = document.createElement("img");
-        if (file.type.startsWith("image/")) {
-            img.src = URL.createObjectURL(file);
-        } else {
-            img.src = "path/to/default-64x64-icon.png"; // Replace with your default icon path.
-        }
-        img.width = 64;
-        img.height = 64;
+        img.src = item.image_url.url;
+        img.style.maxWidth = "150px";
+        img.style.maxHeight = "150px";
         img.style.marginRight = "10px";
         li.appendChild(img);
 
-        // Display file name.
         const nameSpan = document.createElement("span");
-        nameSpan.textContent = file.name;
+        nameSpan.textContent = "Image";
         li.appendChild(nameSpan);
 
-        // Create a removal button.
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "X";
         removeBtn.style.marginLeft = "auto";
         removeBtn.style.cursor = "pointer";
+        removeBtn.style.width = "50px";
         removeBtn.addEventListener("click", () => {
-            // Remove the file from the array.
-            droppedFiles.splice(index, 1);
-            // Re-render the file list.
+            droppedImages.splice(index, 1);
             renderFileList();
         });
         li.appendChild(removeBtn);
@@ -378,17 +372,52 @@ function handleClearHistoryButtonClick() {
 }
 
 function handleShowInstructionsButtonClick() {
-    const el = document.getElementById('instructions-id');
-    if (el?.style.getPropertyValue("display") == "none") {
+    if (instructions?.style.getPropertyValue("display") == "none") {
         showProgressRing();
         vscode.postMessage({ command: 'show-instructions-set' });
-        el?.style.setProperty("display", "block")
+        instructions?.style.setProperty("display", "block")
     }
-    else el?.style.setProperty("display", "none")
+    else instructions?.style.setProperty("display", "none")
 
     const el2 = document.getElementById('instructions-header');
     if (el2?.style.getPropertyValue("display") == "none") el2?.style.setProperty("display", "block")
     else el2?.style.setProperty("display", "none")
+
+    const el3 = document.getElementById('instructions-image-container');
+    if (el3?.style.getPropertyValue("display") == "none") el3?.style.setProperty("display", "block")
+    else el3?.style.setProperty("display", "none")
+}
+
+function createHistoryElement(htmlElement: HTMLElement, content: ContentItem[]) {
+    const textDiv = document.createElement('div');
+    textDiv.textContent = '';
+    let textContent = content.find((c) => c.type === 'text');
+    if (textContent) {
+        textDiv.textContent = textContent.text;
+    }
+    htmlElement.appendChild(textDiv);
+
+    let images = content.filter((c) => c.type === 'image_url');
+    if (images.length > 0) {
+        const imageContainer = document.createElement('div');
+        imageContainer.className = "image-container";
+        images.forEach((imgObj) => {
+            const img = document.createElement('img');
+            img.src = imgObj.image_url.url;
+            img.style.maxWidth = '150px';
+            img.style.maxHeight = '150px';
+            img.style.margin = '5px';
+            img.style.cursor = 'pointer';
+            imageContainer.appendChild(img);
+        });
+        imageContainer.style.display = 'flex';
+        htmlElement.appendChild(imageContainer);
+    }
+
+    htmlElement.addEventListener('click', () => {
+        onHistoryClicked(content);
+    });
+    htmlElement.title = textDiv.textContent;
 }
 
 /**
@@ -403,43 +432,17 @@ function updateHistoryList() {
         let index = 0;
         for (const content of searchHistory) {
             if (content != undefined) {
-
-                index++;
+                index++; //JSB will use this index to pass in case of click
                 const spanContainer = document.createElement('span');
                 spanContainer.id = "container-span-id"
                 spanContainer.className = "flex-container"
                 spanContainer.style.marginTop = '15px';
-
-                const spanNumber = document.createElement('span');
-                spanNumber.id = "span-number-id"
-                spanNumber.textContent = index + ') ';
-                spanNumber.style.minWidth = '10px';
-                spanNumber.style.width = '10px';
-                spanNumber.style.fontSize = '14px';
-                spanContainer.appendChild(spanNumber);
-
                 const li = document.createElement('li');
-                let contentText: string;
-                if (typeof content === 'string') {
-                    contentText = content;
-                } else if (Array.isArray(content)) { //if content is an array
-                    //new system with content type
-                    let obj = content.find((c) => c.type === 'text');
-                    if (obj) {
-                        contentText = obj.text;
-                    } else {
-                        contentText = '';
-                    }
-                } else contentText = '';
-                li.textContent = contentText.length > 50 ? contentText.substring(0, 250) + '...' : contentText;
-                li.addEventListener('click', () => {
-                    onHistoryClicked(contentText);
-                });
-                li.title = contentText;
+                li.id = 'history-item-' + index;
+                createHistoryElement(li, content);
                 li.style.cursor = 'pointer';
                 li.style.fontSize = '14px';
-                li.style.listStyleType = 'none';
-
+                li.style.listStyleType = 'auto';
                 spanContainer.appendChild(li);
                 ul.appendChild(spanContainer);
             }
@@ -450,26 +453,22 @@ function updateHistoryList() {
 /**
  * Handle on click history question event.
  */
-function onHistoryClicked(question: string) {
-    vscode.postMessage({ command: 'history-question-clicked', data: question });
-
-    // clear fields
-    //answer.innerHTML = '';
-    var data = document.createElement('div');
-    data.addEventListener('click', () => {
-        onHistoryClicked(question);
-    });
-    data.className = 'userChatLog'
-    data.appendChild(document.createTextNode(question));
-    answer?.appendChild(data);
-    //chatQuestionTextArea.value = question;
+function onHistoryClicked(content: ContentItem[]) {
+    // Place the content in the question field.
+    const textContent = content.find((c) => c.type === 'text');
+    if (textContent) {
+        chatQuestionTextArea.value = textContent.text;
+    }
+    // Place the images in the image field.
+    droppedImages = content.filter((c) => c.type === 'image_url');
+    renderFileList()
 }
 
 /**
  * Add last search to history.
  * @param content :string
  */
-function addHistory(content: string) {
+function addHistory(content: ContentItem[]) {
     if (content != undefined) {
         if (searchHistory.length < 10) {
             if (!searchHistory.includes(content))
