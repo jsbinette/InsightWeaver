@@ -1,11 +1,11 @@
-import * as vscode from 'vscode';
-import { getNonce, getAsWebviewUri } from '../utilities/utility.service';
-import { TreeDataModel, RootElement } from '../utilities/treeDataModel';
-import { Tag } from '../utilities/tagsController';
+import * as vscode from 'vscode'
+import { getNonce, getAsWebviewUri } from '../utilities/utility.service'
+import { TreeDataModel, RootElement } from '../utilities/treeDataModel'
+import { Tag } from '../utilities/tagsController'
 
 export class TreeWebviewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewId = 'treeView';
-    private _view?: vscode.WebviewView;
+    public static readonly viewId = 'treeView'
+    private _view?: vscode.WebviewView
 
     constructor(private readonly _extensionUri: vscode.Uri,
         private readonly dataModel: TreeDataModel) {
@@ -17,28 +17,28 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
         _context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken
     ) {
-        this._view = webviewView;
-        webviewView.webview.options = { enableScripts: true };
-        webviewView.webview.html = this._getWebviewContent(this._view.webview, this._extensionUri);
+        this._view = webviewView
+        webviewView.webview.options = { enableScripts: true }
+        webviewView.webview.html = this._getWebviewContent(this._view.webview, this._extensionUri)
     
-        this.addReceiveMessageEvents(webviewView.webview);
+        this.addReceiveMessageEvents(webviewView.webview)
     }
 
     public refresh() {
         // Called whenever your data changes
         if (this._view) {
-            this._view.webview.html = this._getWebviewContent(this._view.webview, this._extensionUri);
+            this._view.webview.html = this._getWebviewContent(this._view.webview, this._extensionUri)
         }
     }
 
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
         if (this._view) {
-            const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "tree-webview.js"]);
-            const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
-            const codiconsUri = getAsWebviewUri(webview, extensionUri, ['node_modules', '@vscode/codicons', 'dist', 'codicon.css']);
-            const nonce = getNonce();
+            const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "tree-webview.js"])
+            const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css'])
+            const codiconsUri = getAsWebviewUri(webview, extensionUri, ['node_modules', '@vscode/codicons', 'dist', 'codicon.css'])
+            const nonce = getNonce()
             //JSB here is the important part
-            const rootElements = this.dataModel.getRoot();
+            const rootElements = this.dataModel.getRoot()
             return `<!DOCTYPE html>
             <html>
             <head>
@@ -59,10 +59,10 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
                ${this.createRootListMarkup(rootElements)}
             </ul>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
-            </body></html>`;
+            </body></html>`
         }
         else {
-            return '';
+            return ''
         }
     }
 
@@ -74,8 +74,8 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
                 <i class="codicon codicon-menu drag-handle"></i>
             <label id="${el.id}"  class="rootLabel" ${el.out ? '' : 'checked'}>${el.label}</label>
             ${el.children ? `<ul class="child-container">${this.createTagListMarkup(el.children)}</ul>` : ''}
-        </li>`;
-        }).join('');
+        </li>`
+        }).join('')
     }
 
     private createTagListMarkup(elements: Tag[]): string {
@@ -84,14 +84,14 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
                 <li class="list-item ${el.out ? 'grayed-out' : ''} ${el.outLine ? 'crossed-out' : ''}">
                 <span class="codicon codicon-eye eyeIcon" id="${el.id}" style="cursor: pointer; margin-right: 6px;"></span>
                 <label id="${el.id}" class="treeLabel">${el.label}</label>
-            </li>`;
-        }).join('');
+            </li>`
+        }).join('')
     }
 
     private addReceiveMessageEvents(webview: vscode.Webview) {
         webview.onDidReceiveMessage((message: { command: string, args?: any[] }) => {
-            vscode.commands.executeCommand("instructions-manager." + message.command, ...(message.args || []));
-        });
+            vscode.commands.executeCommand("instructions-manager." + message.command, ...(message.args || []))
+        })
     }
 }
 
@@ -105,18 +105,18 @@ export function editorJumptoRange(range: vscode.Range, editor?: vscode.TextEdito
 
     if (!editor) return; // No active editor, nothing to do
 
-    let revealType = vscode.TextEditorRevealType.InCenter;
+    let revealType = vscode.TextEditorRevealType.InCenter
     const selection = new vscode.Selection(
         range.start.line,
         range.start.character,
         range.end.line,
         range.end.character
-    );
+    )
 
     if (range.start.line === editor.selection.active.line) {
-        revealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
+        revealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport
     }
 
-    editor.selection = selection;
-    editor.revealRange(selection, revealType);
+    editor.selection = selection
+    editor.revealRange(selection, revealType)
 }

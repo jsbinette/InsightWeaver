@@ -1,15 +1,15 @@
-import * as vscode from "vscode";
-import { getStoreData, getNonce, getAsWebviewUri, getVSCodeUri, getHistoryData } from "../utilities/utility.service";
-import { imageGenerationeFromChatGpt } from "../utilities/chat-gpt-api.service";
+import * as vscode from "vscode"
+import { getStoreData, getNonce, getAsWebviewUri, getVSCodeUri, getHistoryData } from "../utilities/utility.service"
+import { imageGenerationeFromChatGpt } from "../utilities/chat-gpt-api.service"
 
 /**
  * Image panel class
  */
 export class ImagePanel {
-    public static currentPanel: ImagePanel | undefined;
-    private readonly _panel: vscode.WebviewPanel;
-    private _disposables: vscode.Disposable[] = [];
-    private _context: vscode.ExtensionContext;
+    public static currentPanel: ImagePanel | undefined
+    private readonly _panel: vscode.WebviewPanel
+    private _disposables: vscode.Disposable[] = []
+    private _context: vscode.ExtensionContext
 
     /**
      * Constructor
@@ -18,13 +18,13 @@ export class ImagePanel {
      * @param extensionUri :vscode.Uri.
      */
     private constructor(context: vscode.ExtensionContext, panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-        this._context = context;
-        this._panel = panel;
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        this._context = context
+        this._panel = panel
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables)
 
 
-        this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
-        this._setWebviewMessageListener(this._panel.webview);
+        this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri)
+        this._setWebviewMessageListener(this._panel.webview)
     }
 
     /**
@@ -35,26 +35,26 @@ export class ImagePanel {
 
         // if exist show 
         if (ImagePanel.currentPanel) {
-            ImagePanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
+            ImagePanel.currentPanel._panel.reveal(vscode.ViewColumn.One)
         } else {
 
             // if not exist create a new one.
-            const extensionUri: vscode.Uri = context.extensionUri;
+            const extensionUri: vscode.Uri = context.extensionUri
             const panel = vscode.window.createWebviewPanel("vscode-chat-gpt", "Generate Image", vscode.ViewColumn.One, {
                 // Enable javascript in the webview.
                 enableScripts: true,
                 // Restrict the webview to only load resources from the `out` directory.
                 localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'out')]
-            });
+            })
 
-            const logoMainPath = getVSCodeUri(extensionUri, ['out/media', 'chat-gpt-logo.jpeg']);
+            const logoMainPath = getVSCodeUri(extensionUri, ['out/media', 'chat-gpt-logo.jpeg'])
             const icon = {
                 "light": logoMainPath,
                 "dark": logoMainPath
-            };
-            panel.iconPath = icon;
+            }
+            panel.iconPath = icon
 
-            ImagePanel.currentPanel = new ImagePanel(context, panel, extensionUri);
+            ImagePanel.currentPanel = new ImagePanel(context, panel, extensionUri)
         }
     }
 
@@ -62,14 +62,14 @@ export class ImagePanel {
      * Dispose panel.
      */
     public dispose() {
-        ImagePanel.currentPanel = undefined;
+        ImagePanel.currentPanel = undefined
 
-        this._panel.dispose();
+        this._panel.dispose()
 
         while (this._disposables.length) {
-            const disposable = this._disposables.pop();
+            const disposable = this._disposables.pop()
             if (disposable) {
-                disposable.dispose();
+                disposable.dispose()
             }
         }
     }
@@ -81,20 +81,20 @@ export class ImagePanel {
     private _setWebviewMessageListener(webview: vscode.Webview) {
         webview.onDidReceiveMessage(
             (message: any) => {
-                const command = message.command;
+                const command = message.command
 
                 switch (command) {
                     case "press-image-ask-button":
-                        this._askToChatGpt(message.data);
-                        return;
+                        this._askToChatGpt(message.data)
+                        return
                     case "image-clicked":
-                        vscode.env.openExternal(vscode.Uri.parse(message.data));
-                        return;
+                        vscode.env.openExternal(vscode.Uri.parse(message.data))
+                        return
                 }
             },
             undefined,
             this._disposables
-        );
+        )
     }
 
 
@@ -103,15 +103,15 @@ export class ImagePanel {
      * Gets Html content of webview panel.
      * @param webview :vscode.Webview.
      * @param extensionUri :vscode.Uri.
-     * @returns string;
+     * @returns string
      */
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
         // get uris from out directory based on vscode.extensionUri
-        const webviewUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "image-webview.js"]);
-        const nonce = getNonce();
-        const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
-        const logoMainPath = getAsWebviewUri(webview, extensionUri, ['out/media', 'chat-gpt-logo.jpeg']);
+        const webviewUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "image-webview.js"])
+        const nonce = getNonce()
+        const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css'])
+        const logoMainPath = getAsWebviewUri(webview, extensionUri, ['out/media', 'chat-gpt-logo.jpeg'])
 
         return /*html*/ `
         <!DOCTYPE html>
@@ -138,7 +138,7 @@ export class ImagePanel {
             <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
           </body>
         </html>
-        `;
+        `
     }
 
     /**
@@ -146,25 +146,25 @@ export class ImagePanel {
      * @param question :string
      */
     private _askToChatGpt(question: string) {
-        const storeData = getStoreData(this._context);
-        const existApiKey = storeData.apiKey;
-        const existImageSize = storeData.imageSize;
+        const storeData = getStoreData(this._context)
+        const existApiKey = storeData.apiKey
+        const existImageSize = storeData.imageSize
         if (existApiKey == undefined || existApiKey == null || existApiKey == '') {
-            vscode.window.showInformationMessage('Please add your Open Ai api key!');
+            vscode.window.showInformationMessage('Please add your Open Ai api key!')
         } else if (existImageSize == undefined || existImageSize == null || existImageSize == 0) {
-            vscode.window.showInformationMessage('Please add image size!');
+            vscode.window.showInformationMessage('Please add image size!')
         }
         else {
             imageGenerationeFromChatGpt(question, existApiKey,existImageSize).then(data => {
 
                 if (data == undefined || data == null) {
-                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Error: No data returned! Some problem of coding.' });
+                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: 'Error: No data returned! Some problem of coding.' })
                 } else if (data.includes('Error')) {
-                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: data });
+                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'error-message', data: data })
                 } else {
-                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'image-urls-answer', data: data });
+                    ImagePanel.currentPanel?._panel.webview.postMessage({ command: 'image-urls-answer', data: data })
                 }
-            });
+            })
         }
     }
 }

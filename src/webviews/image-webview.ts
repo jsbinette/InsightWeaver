@@ -8,42 +8,42 @@ import {
     ProgressRing,
     Button,
     TextArea,
-} from "@vscode/webview-ui-toolkit";
+} from "@vscode/webview-ui-toolkit"
 
 /**
  * Register "@vscode/webview-ui-toolkit" component to vscode design system.
  */
-provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeProgressRing(), vsCodeTextArea(), vsCodeDivider(), vsCodeProgressRing(), vsCodeTextField());
+provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeProgressRing(), vsCodeTextArea(), vsCodeDivider(), vsCodeProgressRing(), vsCodeTextField())
 
-const vscode = acquireVsCodeApi();
+const vscode = acquireVsCodeApi()
 
 // Add load event listener.
-window.addEventListener("load", main);
+window.addEventListener("load", main)
 
 // image
-const askImageButton = document.getElementById("ask-image-button-id") as Button;
-const promptTextArea = document.getElementById("prompt-text-id") as TextArea;
-const clearImageButton = document.getElementById("clear-image-button-id") as Button;
+const askImageButton = document.getElementById("ask-image-button-id") as Button
+const promptTextArea = document.getElementById("prompt-text-id") as TextArea
+const clearImageButton = document.getElementById("clear-image-button-id") as Button
 
 /**
  * Main function
  */
 function main() {
 
-    hideProgressRing();
+    hideProgressRing()
 
     // image button events
-    askImageButton?.addEventListener("click", handleImageAskClick);
+    askImageButton?.addEventListener("click", handleImageAskClick)
     clearImageButton?.addEventListener("click", handleImageClearClick);  
 
     // image enter event
     promptTextArea?.addEventListener("keypress", function (event) {
         /*if (event.key === "Enter") {
-            event.preventDefault();
+            event.preventDefault()
             // Trigger the button element with a click
-            handleImageAskClick();
+            handleImageAskClick()
         }*/
-    });
+    })
 
     try {
         // Handle messages sent from the extension to the webview
@@ -52,21 +52,21 @@ function main() {
             switch (message.command) {
                 case 'image-urls-answer':
                     // Append answer.
-                    const imageList = message.data as any[];
+                    const imageList = message.data as any[]
                     updateImageList(imageList)
-                    hideProgressRing();
-                    break;
+                    hideProgressRing()
+                    break
                 case 'error-message':
                     // Append answer.
-                    showErrorMessage(message.data);
-                    hideProgressRing();
-                    break;
+                    showErrorMessage(message.data)
+                    hideProgressRing()
+                    break
                 case 'error':
-                    break;
+                    break
             }
-        });
+        })
     } catch (err: any) {
-        console.log(err);
+        console.log(err)
     }
 }
 
@@ -76,38 +76,38 @@ function main() {
  */
 function updateImageList(imageUrls: any[]) {
 
-    const galleryContainer = document.getElementById('gallery-container');
+    const galleryContainer = document.getElementById('gallery-container')
 
     if (galleryContainer != null) {
-        galleryContainer.textContent = '';
-        let index = 0;
+        galleryContainer.textContent = ''
+        let index = 0
         for (const img of imageUrls) {
             if (img != undefined) {
 
-                index++;
+                index++
 
-                const galleryDivTag = document.createElement('div');
+                const galleryDivTag = document.createElement('div')
                 galleryDivTag.className = "gallery"
 
-                const aTag = document.createElement('a');
-                aTag.target = '_blank';
-                aTag.href = img.url;
+                const aTag = document.createElement('a')
+                aTag.target = '_blank'
+                aTag.href = img.url
 
-                const imgNode = document.createElement('img');
-                imgNode.src = img.url;
-                imgNode.width = 400;
-                imgNode.height = 400;
-                imgNode.alt = promptTextArea.value + '-' + index;
-                imgNode.style.cursor = 'pointer';
-                aTag.appendChild(imgNode);
+                const imgNode = document.createElement('img')
+                imgNode.src = img.url
+                imgNode.width = 400
+                imgNode.height = 400
+                imgNode.alt = promptTextArea.value + '-' + index
+                imgNode.style.cursor = 'pointer'
+                aTag.appendChild(imgNode)
 
-                const descDivTag = document.createElement('div');
-                descDivTag.className = "desc";
-                descDivTag.textContent = promptTextArea.value + '-' + index;
+                const descDivTag = document.createElement('div')
+                descDivTag.className = "desc"
+                descDivTag.textContent = promptTextArea.value + '-' + index
 
-                galleryDivTag.appendChild(aTag);
-                galleryDivTag.appendChild(descDivTag);
-                galleryContainer.appendChild(galleryDivTag);
+                galleryDivTag.appendChild(aTag)
+                galleryDivTag.appendChild(descDivTag)
+                galleryContainer.appendChild(galleryDivTag)
             }
         }
     }
@@ -118,19 +118,19 @@ function updateImageList(imageUrls: any[]) {
  */
 function handleImageAskClick() {
 
-    showProgressRing();
+    showProgressRing()
 
-    const pError = document.getElementById('error-message') as any;
-    pError.textContent = '';
+    const pError = document.getElementById('error-message') as any
+    pError.textContent = ''
 
     // Send messages to Panel.
     vscode.postMessage({
         command: "press-image-ask-button",
         data: promptTextArea.value,
-    });
+    })
 
     // Clear images filed.
-    updateImageList([]);
+    updateImageList([])
 }
 
 /**
@@ -139,16 +139,16 @@ function handleImageAskClick() {
 function handleImageClearClick() {
 
     // Clear images filed.
-    updateImageList([]);
+    updateImageList([])
 
     // Clear question field.
-    promptTextArea.value = '';
+    promptTextArea.value = ''
 }
 
 
 function showErrorMessage(message: string) {
-    const pError = document.getElementById('error-message') as any;
-    pError.textContent = message;
+    const pError = document.getElementById('error-message') as any
+    pError.textContent = message
     pError?.style.setProperty("display", "inline")
 }
 
@@ -158,14 +158,14 @@ function showErrorMessage(message: string) {
  */
 function showProgressRing() {
     // add progress ring.
-    const progressRing = document.getElementById("progress-ring-id") as ProgressRing;
-    progressRing.style.display = 'inline-block';
+    const progressRing = document.getElementById("progress-ring-id") as ProgressRing
+    progressRing.style.display = 'inline-block'
 }
 
 /**
  * Hide progressing ring.
  */
 function hideProgressRing() {
-    const progressRing = document.getElementById("progress-ring-id") as ProgressRing;
-    progressRing.style.display = 'none';
+    const progressRing = document.getElementById("progress-ring-id") as ProgressRing
+    progressRing.style.display = 'none'
 }

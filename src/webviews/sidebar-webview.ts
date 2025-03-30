@@ -1,18 +1,18 @@
-const sidebarVscode = acquireVsCodeApi();
+const sidebarVscode = acquireVsCodeApi()
 
 /**
  * Add load event.
  */
-window.addEventListener("load", main);
+window.addEventListener("load", main)
 
 // Declare Html elements.
-const startChatButton = document.getElementById("start-chat-gpt-button");
-const imageButton = document.getElementById("image-generate-button");
-const apiKeySaveButton = document.getElementById("api-key-save-button-id") as any;
-const apiKeyTextField = document.getElementById("api-key-text-field-id") as any;
-const temperatureTextField = document.getElementById("temperature-text-field-id") as any;
-const imageSizeTextField = document.getElementById("image-size-text-field-id") as any;
-const modelSelect = document.getElementById("model-select-id") as any;
+const startChatButton = document.getElementById("start-chat-gpt-button")
+const imageButton = document.getElementById("image-generate-button")
+const apiKeySaveButton = document.getElementById("api-key-save-button-id") as any
+const apiKeyTextField = document.getElementById("api-key-text-field-id") as any
+const temperatureTextField = document.getElementById("temperature-text-field-id") as any
+const imageSizeTextField = document.getElementById("image-size-text-field-id") as any
+const modelSelect = document.getElementById("model-select-id") as any
 
 /**
  * Main function
@@ -20,34 +20,34 @@ const modelSelect = document.getElementById("model-select-id") as any;
 function main() {
 
     // Add eventLsteners of Html elements.
-    startChatButton?.addEventListener("click", handleStartButtonClick);
-    imageButton?.addEventListener("click", handleImageButtonClick);
-    apiKeySaveButton?.addEventListener("click", handleSaveClick);
+    startChatButton?.addEventListener("click", handleStartButtonClick)
+    imageButton?.addEventListener("click", handleImageButtonClick)
+    apiKeySaveButton?.addEventListener("click", handleSaveClick)
 
     // Handle messages sent from the extension or panel to the webview
     window.addEventListener('message', event => {
         const message = event.data; // The json data that the extension sent
         switch (message.command) {
             case 'settings-exist':
-                apiKeyTextField.value = message.data.apiKey;
-                temperatureTextField.value = message.data.temperature;
-                imageSizeTextField.value = message.data.imageSize;
-                modelSelect.innerHTML = "";
+                apiKeyTextField.value = message.data.apiKey
+                temperatureTextField.value = message.data.temperature
+                imageSizeTextField.value = message.data.imageSize
+                modelSelect.innerHTML = ""
                 // Populate options dynamically
-                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1","gpt-4.5-preview"];
+                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1","gpt-4.5-preview"]
                 message.data.models.forEach( (optionText:string) => {
-                    const optionElement = document.createElement("option");
+                    const optionElement = document.createElement("option")
                     optionElement.value = optionText; // Set the value
                     optionElement.textContent = optionText; // Set the display text
                     modelSelect.appendChild(optionElement); // Append to select
-                });
-                modelSelect.value = message.data.model;
-                break;
+                })
+                modelSelect.value = message.data.model
+                break
             case 'error':
-                console.log(message);
-                break;
+                console.log(message)
+                break
         }
-    });
+    })
 }
 
 /**
@@ -58,7 +58,7 @@ function handleStartButtonClick() {
     sidebarVscode.postMessage({
         command: "start-chat-command",
         text: 'start-chat',
-    });
+    })
 }
 
 /**
@@ -69,7 +69,7 @@ function handleImageButtonClick() {
     sidebarVscode.postMessage({
         command: "image-buton-clicked-command",
         text: 'image-button',
-    });
+    })
 }
 
 /**
@@ -85,5 +85,5 @@ function handleSaveClick() {
     sidebarVscode.postMessage({
         command: "save-settings",
         data: data,
-    });
+    })
 }

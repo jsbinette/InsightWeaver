@@ -1,10 +1,10 @@
-import * as vscode from 'vscode';
-import { getNonce, getAsWebviewUri, getStoreData, setStoreData } from '../utilities/utility.service';
+import * as vscode from 'vscode'
+import { getNonce, getAsWebviewUri, getStoreData, setStoreData } from '../utilities/utility.service'
 
 export class SideBarViewProvider implements vscode.WebviewViewProvider {
 
-	public static readonly viewType = 'chat-gpt-view-id';
-	private _view?: vscode.WebviewView;
+	public static readonly viewType = 'chat-gpt-view-id'
+	private _view?: vscode.WebviewView
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -19,23 +19,23 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken,
 	) {
 
-		this._view = webviewView;
+		this._view = webviewView
 
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
 			localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'out')]
-		};
+		}
 
-		webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri);
+		webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri)
 
 		// Register message events that comes from the js.
-		this.addReceiveMessageEvents(webviewView.webview);
+		this.addReceiveMessageEvents(webviewView.webview)
 
 
 		// Read the api key from globalState and send it to webview
-		const storeData = getStoreData(this._context);
-		this._view.webview.postMessage({ command: 'settings-exist', data: storeData });
+		const storeData = getStoreData(this._context)
+		this._view.webview.postMessage({ command: 'settings-exist', data: storeData })
 	}
 
 	/**
@@ -44,24 +44,24 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 	 */
 	private addReceiveMessageEvents(webview: vscode.Webview) {
 		webview.onDidReceiveMessage((message: any) => {
-			const command = message.command;
+			const command = message.command
 			switch (command) {
 				case "start-chat-command":
-					vscode.commands.executeCommand('instructions-manager.start');
-					break;
+					vscode.commands.executeCommand('instructions-manager.start')
+					break
 
 				case "image-buton-clicked-command":
-					vscode.commands.executeCommand('instructions-manager.start-image');
-					break;
+					vscode.commands.executeCommand('instructions-manager.start-image')
+					break
 				case "save-settings":
-					setStoreData(this._context, message.data);
-					const responseMessage = `Settings saved successfully.`;
-					vscode.window.showInformationMessage(responseMessage);
-					break;
+					setStoreData(this._context, message.data)
+					const responseMessage = `Settings saved successfully.`
+					vscode.window.showInformationMessage(responseMessage)
+					break
 			}
 		},
 			undefined
-		);
+		)
 	}
 
 	/**
@@ -73,13 +73,13 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 	private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
 		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "sidebar-webview.js"]);
+		const scriptUri = getAsWebviewUri(webview, extensionUri, ["out/webviews", "sidebar-webview.js"])
 
 		// Do the same for the stylesheet.
-		const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css']);
+		const styleVSCodeUri = getAsWebviewUri(webview, extensionUri, ['out/media', 'vscode.css'])
 
 		// Use a nonce to only allow a specific script to be run.
-		const nonce = getNonce();
+		const nonce = getNonce()
 
 		return `<!DOCTYPE html>
 			<html lang="en">
@@ -119,6 +119,6 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			</div>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
-			</html>`;
+			</html>`
 	}
 }

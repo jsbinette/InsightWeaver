@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
-import EventEmitter = require('events');
+import * as vscode from "vscode"
+import EventEmitter = require('events')
 
 export function getExtensionConfig(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('instructions-manager');
+  return vscode.workspace.getConfiguration('instructions-manager')
 }
 
 /**
@@ -10,12 +10,12 @@ export function getExtensionConfig(): vscode.WorkspaceConfiguration {
  * @returns string
  */
 export function getNonce() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let text = ""
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
+    text += possible.charAt(Math.floor(Math.random() * possible.length))
   }
-  return text;
+  return text
 }
 
 /**
@@ -26,7 +26,7 @@ export function getNonce() {
  * @returns vscode.Uri
  */
 export function getAsWebviewUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
-  return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
+  return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList))
 }
 
 /**
@@ -36,7 +36,7 @@ export function getAsWebviewUri(webview: vscode.Webview, extensionUri: vscode.Ur
  * @returns vscode.Uri
  */
 export function getVSCodeUri(extensionUri: vscode.Uri, pathList: string[]) {
-  return vscode.Uri.joinPath(extensionUri, ...pathList);
+  return vscode.Uri.joinPath(extensionUri, ...pathList)
 }
 
 /**
@@ -45,32 +45,32 @@ export function getVSCodeUri(extensionUri: vscode.Uri, pathList: string[]) {
  * @param storeData : any
  */
 export function setStoreData(context: vscode.ExtensionContext, storeData: any) {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
   if (storeData !== undefined) {
     state.write({
       storeData: storeData
-    });
+    })
   }
 }
 
 export function setHistoryData(context: vscode.ExtensionContext, historyData: any) {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
   if (historyData !== undefined) {
     state.writeHistory({
       historyData: historyData
-    });
+    })
   }
 }
 
 export function setChatData(context: vscode.ExtensionContext, chatData: any) {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
   if (chatData !== undefined) {
     state.writeChat({
       chatData: chatData
-    });
+    })
   }
 }
 
@@ -80,36 +80,36 @@ export function setChatData(context: vscode.ExtensionContext, chatData: any) {
  * @returns string
  */
 export function getStoreData(context: vscode.ExtensionContext): any {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
-  const { storeData } = state.read();
-  return storeData as any;
+  const { storeData } = state.read()
+  return storeData as any
 }
 
 export function getHistoryData(context: vscode.ExtensionContext): any {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
-  const { historyData } = state.readHistory();
-  return historyData as any;
+  const { historyData } = state.readHistory()
+  return historyData as any
 }
 
 export function getChatData(context: vscode.ExtensionContext): any {
-  const state = globalStateManager(context);
+  const state = globalStateManager(context)
 
-  const { chatData } = state.readChat();
-  return chatData as any;
+  const { chatData } = state.readChat()
+  return chatData as any
 }
 
 export function deserializeWithUri(json: string): any {
   return JSON.parse(json, (key, value) => {
-    let a = value;
+    let a = value
     if (key == 'resource') {
-      a = vscode.Uri.parse(value);
+      a = vscode.Uri.parse(value)
     } else if (['range', 'textAfterTagRange', 'textBeforeTagRange'].includes(key)) {
-      a = new vscode.Range(value[0].line, value[0].character, value[1].line, value[1].character);
+      a = new vscode.Range(value[0].line, value[0].character, value[1].line, value[1].character)
     }
-    return a;
-  });
+    return a
+  })
 }
 
 /**
@@ -125,44 +125,44 @@ export function globalStateManager(context: vscode.ExtensionContext) {
     readHistory,
     writeChat,
     readChat,
-  };
+  }
 
   function read() {
     return {
       storeData: context.globalState.get('storeData')
-    };
+    }
   }
 
   function readHistory() {
     var historyData = context.globalState.get('historyData')
     if (historyData == undefined) {
-      historyData = [];
+      historyData = []
     }
     return {
       historyData
-    };
+    }
   }
 
   function readChat() {
     var chatData = context.globalState.get('chatData')
     if (chatData == undefined) {
-      chatData = [];
+      chatData = []
     }
     return {
       chatData
-    };
+    }
   }
 
   function write(newState: any) {
-    context.globalState.update('storeData', newState.storeData);
+    context.globalState.update('storeData', newState.storeData)
   }
 
   function writeChat(newState: any) {
-    context.globalState.update('chatData', newState.chatData);
+    context.globalState.update('chatData', newState.chatData)
   }
 
   function writeHistory(newState: any) {
-    context.globalState.update('historyData', newState.historyData);
+    context.globalState.update('historyData', newState.historyData)
   }
 }
 
