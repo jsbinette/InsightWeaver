@@ -20,14 +20,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	const treeWebviewProvider = new TreeWebviewProvider(context.extensionUri, treeDataModel)
 
 	// Chat panel register
-	const chatPanelCommand = vscode.commands.registerCommand("instructions-manager.start", () => {
+	const chatPanelCommand = vscode.commands.registerCommand("insightweaver.start", () => {
 		//Jan2025 JSB I'm passing the instructionController so that the instance that has the tags is available to the view.
 		ChatGptPanel.render(context, tagsController)
 	})
 	context.subscriptions.push(chatPanelCommand)
 
 	// Image panel register
-	const imagePanelCommand = vscode.commands.registerCommand("instructions-manager.start-image", () => {
+	const imagePanelCommand = vscode.commands.registerCommand("insightweaver.start-image", () => {
 		ImagePanel.render(context)
 	})
 	context.subscriptions.push(imagePanelCommand)
@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	/** Register commands */
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.jumpToRange', (documentUri: vscode.Uri, range: vscode.Range) => {
+		vscode.commands.registerCommand('insightweaver.jumpToRange', (documentUri: vscode.Uri, range: vscode.Range) => {
 			vscode.workspace.openTextDocument(documentUri).then((doc) => {
 				vscode.window.showTextDocument(doc).then((editor) => {
 					editorJumptoRange(range, editor)
@@ -55,28 +55,28 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.refresh', async () => {
+		vscode.commands.registerCommand('insightweaver.refresh', async () => {
 			await tagsController.scanWorkspace()
 			treeWebviewProvider.refresh()
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.showFilesModeAllVisibleEditors', () => {
+		vscode.commands.registerCommand('insightweaver.showFilesModeAllVisibleEditors', () => {
 			getExtensionConfig().update('view.showFilesMode', 'allVisibleEditors')
 			treeWebviewProvider.refresh()
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.showFilesModeOnlyActiveEditor', () => {
+		vscode.commands.registerCommand('insightweaver.showFilesModeOnlyActiveEditor', () => {
 			getExtensionConfig().update('view.showFilesMode', 'onlyActiveEditor')
 			treeWebviewProvider.refresh()
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('instructions-manager.reloadWordsAndStyles', () => {
+		vscode.commands.registerCommand('insightweaver.reloadWordsAndStyles', () => {
 			tagsController.reloadWordsAndStyles()
 			if (vscode.window.activeTextEditor) {
 				tagsController.decorate(vscode.window.activeTextEditor)
@@ -85,7 +85,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.chooseGroupBy", async (selectedChoice: string) => {
+		vscode.commands.registerCommand("insightweaver.chooseGroupBy", async (selectedChoice: string) => {
 			treeDataModel.changeGoupBy(selectedChoice)
 			await tagsController.scanWorkspace()
 			treeWebviewProvider.refresh()
@@ -93,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.debug.state.reset", () => {
+		vscode.commands.registerCommand("insightweaver.debug.state.reset", () => {
 			tagsController.resetWorkspace()
 			treeDataModel.resetWorkspace()
 			tagsController.loadFromWorkspace()
@@ -104,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	//JSB
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.goToTag", (id: string) => {
+		vscode.commands.registerCommand("insightweaver.goToTag", (id: string) => {
 			const tree = treeDataModel.getRoot()
 			const element = tree.find((element) => element.id === id)
 			if (element) { //we have a root; we do nothing
@@ -114,7 +114,7 @@ export async function activate(context: vscode.ExtensionContext) {
 						const child = element.children.find((child) => child.id === id)
 						if (child) {
 							vscode.commands.executeCommand(
-								'instructions-manager.jumpToRange',
+								'insightweaver.jumpToRange',
 								child.resource,
 								child.location.range
 							)
@@ -126,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.rootToggle", (id: string) => {
+		vscode.commands.registerCommand("insightweaver.rootToggle", (id: string) => {
 			const tree = treeDataModel.lastRoots
 			const element = tree.find((element) => element.id === id)
 			if (element) {
@@ -137,7 +137,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.outGroupToggle", async (id: string) => {
+		vscode.commands.registerCommand("insightweaver.outGroupToggle", async (id: string) => {
 			const tree = treeDataModel.lastRoots
 			const element = tree.find((element) => element.id === id)
 			if (element) {
@@ -166,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.outToggle", async (id: string) => {
+		vscode.commands.registerCommand("insightweaver.outToggle", async (id: string) => {
 			const tags = tagsController.tags
 			const element = tags.find((element) => element.id === id)
 			if (element) {
@@ -188,7 +188,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.draggedRootElement", async (id: string, idNext: string | null) => {
+		vscode.commands.registerCommand("insightweaver.draggedRootElement", async (id: string, idNext: string | null) => {
 			const tree = treeDataModel.lastRoots
 			const element = tree.find((el) => el.id === id)
 			
@@ -228,7 +228,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("instructions-manager.scanWorkspace", async () => {
+		vscode.commands.registerCommand("insightweaver.scanWorkspace", async () => {
 			await tagsController.scanWorkspace()
 			treeWebviewProvider.refresh()
 		})

@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import EventEmitter = require('events')
 
 export function getExtensionConfig(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('instructions-manager')
+  return vscode.workspace.getConfiguration('insightweaver')
 }
 
 /**

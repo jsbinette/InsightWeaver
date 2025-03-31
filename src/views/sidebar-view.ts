@@ -47,11 +47,11 @@ export class SideBarViewProvider implements vscode.WebviewViewProvider {
 			const command = message.command
 			switch (command) {
 				case "start-chat-command":
-					vscode.commands.executeCommand('instructions-manager.start')
+					vscode.commands.executeCommand('insightweaver.start')
 					break
 
 				case "image-buton-clicked-command":
-					vscode.commands.executeCommand('instructions-manager.start-image')
+					vscode.commands.executeCommand('insightweaver.start-image')
 					break
 				case "save-settings":
 					setStoreData(this._context, message.data)

@@ -1,18 +1,18 @@
 {
-  "name": "instructions-manager",
-  "displayName": "Instructions Manager",
+  "name": "insightweaver",
+  "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "GPLv3",
   "publisher": "jsbinette",
   "bugs": {
-    "url": "https://github.com/jsbinette/instructions-manager/issues",
+    "url": "https://github.com/jsbinette/insightweaver/issues",
     "email": "jsbinette@yahoo.com"
   },
-  "homepage": "https://github.com/jsbinette/instructions-manager/main/README.md",
-  "repository": {
-    "url": "https://github.com/ismailkasan/instructions-manager",
-    "type": "git"
+  "homepage": "https://github.com/jsbinette/InsightWeaver#readme",
+"repository": {
+  "url": "https://github.com/jsbinette/InsightWeaver",
+  "type": "git"
   },
   "keywords": [
     "openai",
@@ -34,7 +34,7 @@
   ],
   "activationEvents": [
     "onCommand:extension.start",
-    "onCommand:instructions-manager.jumpToRange"
+    "onCommand:insightweaver.jumpToRange"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -65,27 +65,27 @@
     },
     "commands": [
       {
-        "command": "instructions-manager.start",
+        "command": "insightweaver.start",
         "title": "Ask to ChatGpt"
       },
       {
-        "command": "instructions-manager.start-image",
+        "command": "insightweaver.start-image",
         "title": "Start Image"
       },
       {
-        "command": "instructions-manager.refactor",
+        "command": "insightweaver.refactor",
         "title": "ChatGpt Refactor"
       },
       {
-        "command": "instructions-manager.addComments",
+        "command": "insightweaver.addComments",
         "title": "ChatGpt Add Comments"
       },
       {
-        "command": "instructions-manager.addDocumentaion",
+        "command": "insightweaver.addDocumentaion",
         "title": "ChatGpt Add Documentaion"
       },
       {
-        "command": "instructions-manager.refresh",
+        "command": "insightweaver.refresh",
         "title": "Quick-Refresh View",
         "category": "Instructions",
         "icon": {
@@ -94,7 +94,7 @@
         }
       },
       {
-        "command": "instructions-manager.showFilesModeAllVisibleEditors",
+        "command": "insightweaver.showFilesModeAllVisibleEditors",
         "title": "Show Tags for All Open Tabs",
         "category": "Instructions",
         "icon": {
@@ -103,7 +103,7 @@
         }
       },
       {
-        "command": "instructions-manager.showFilesModeOnlyActiveEditor",
+        "command": "insightweaver.showFilesModeOnlyActiveEditor",
         "title": "Show Tags for Active File",
         "category": "Instructions",
         "icon": {
@@ -112,13 +112,13 @@
         }
       },
       {
-        "command": "instructions-manager.toggleViewKeepFilesExpanded",
+        "command": "insightweaver.toggleViewKeepFilesExpanded",
         "title": "Toggle: Keep File View expanded",
         "category": "Instructions",
         "icon": "images/toggle-expanded.svg"
       },
       {
-        "command": "instructions-manager.scanWorkspace",
+        "command": "insightweaver.scanWorkspace",
         "title": "Scan Workspace for Tags",
         "category": "Instructions",
         "icon": {
@@ -127,29 +127,29 @@
         }
       },
       {
-        "command": "instructions-manager.debug.state.reset",
+        "command": "insightweaver.debug.state.reset",
         "title": "Reset the internal state to fix potential problems",
         "category": "Instructions"
       },
       {
-        "command": "instructions-manager.reloadWordsAndStyles",
+        "command": "insightweaver.reloadWordsAndStyles",
         "title": "DOES NOT WORK Reload Tag Names and Colors (styles)",
         "category": "Instructions"
       }
     ],
     "keybindings": [
       {
-        "command": "instructions-manager.addDocumentaion",
+        "command": "insightweaver.addDocumentaion",
         "key": "ctrl+alt+d",
         "mac": "shift+cmd+d"
       },
       {
-        "command": "instructions-manager.addComments",
+        "command": "insightweaver.addComments",
         "key": "ctrl+alt+c",
         "mac": "shift+cmd+c"
       },
       {
-        "command": "instructions-manager.refactor",
+        "command": "insightweaver.refactor",
         "key": "ctrl+alt+r",
         "mac": "shift+cmd+r"
       }
@@ -157,22 +157,22 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "instructions-manager.start",
+          "command": "insightweaver.start",
           "when": "false"
         }
       ],
       "editor/context": [
         {
-          "command": "instructions-manager.refactor",
+          "command": "insightweaver.refactor",
           "group": "ChatGpt",
           "when": "editorLangId == typescript || editorLangId == javascript || editorLangId == csharp || editorLangId == java"
         },
         {
-          "command": "instructions-manager.addComments",
+          "command": "insightweaver.addComments",
           "group": "ChatGpt"
         },
         {
-          "command": "instructions-manager.addDocumentaion",
+          "command": "insightweaver.addDocumentaion",
           "group": "ChatGpt",
           "when": "editorLangId == typescript || editorLangId == javascript || editorLangId == csharp || editorLangId == java"
         }
@@ -191,14 +191,14 @@
       "type": "object",
       "title": "Instructions Manager",
       "properties": {
-        "instructions-manager.enable": {
+        "insightweaver.enable": {
           "category": "general",
           "type": "boolean",
           "default": true,
           "description": "Enable/Disable the extension.",
           "order": 1
         },
-        "instructions-manager.view.showFilesMode": {
+        "insightweaver.view.showFilesMode": {
           "category": "view",
           "type": "string",
           "enum": [
@@ -209,19 +209,19 @@
           "default": "wholeWorkspace",
           "description": "Either show tags for all files in workspace, visible editors or only for the currently selected editor. default: Whole Workspace"
         },
-        "instructions-manager.view.expanded": {
+        "insightweaver.view.expanded": {
           "category": "view",
           "type": "boolean",
           "default": false,
           "description": "Keep File View expanded otherwise collapsed."
         },
-        "instructions-manager.view.follow": {
+        "insightweaver.view.follow": {
           "category": "view",
           "type": "boolean",
           "default": true,
           "description": "Follow tags while clicking in the editor window. Highlights nearest tags in the tags view. (see `view.followMode` to change the follow behavior)"
         },
-        "instructions-manager.view.followMode": {
+        "insightweaver.view.followMode": {
           "category": "view",
           "type": "string",
           "enum": [
@@ -231,7 +231,7 @@
           "default": "nearest",
           "markdownDescription": "Follow mode for highlighting tags in the tags view. **nearest** (Default): highlight nearest tag relative to the current selection. **chapter**: highlight nearest tag before or on the currently selected line."
         },
-        "instructions-manager.view.lineMode": {
+        "insightweaver.view.lineMode": {
           "category": "view",
           "type": "string",
           "enum": [
@@ -241,93 +241,93 @@
           "default": "selected-tag",
           "description": "Defines Jump to Next/Previous Tag behavior. **selected-tag** (Default): jump based on selected tag in editor. **current-line**: jump based on the current selected line number in the editor."
         },
-        "instructions-manager.view.words.hide": {
+        "insightweaver.view.words.hide": {
           "category": "view",
           "type": "boolean",
           "default": false,
           "markdownDescription": "DOES NOT WORK (already strip the tag from the label in extractTextAfterLastAtWord) Hide tags/trigger words in tag view if a comment was provided."
         },
-        "instructions-manager.view.exclude.gitIgnore": {
+        "insightweaver.view.exclude.gitIgnore": {
           "category": "view",
           "type": "boolean",
           "default": ".json",
           "markdownDescription": "Hide items from the tag view that match an exclusion defined by a .gitignore file (requires reload)"
         },
-        "instructions-manager.default.words.red": {
+        "insightweaver.default.words.red": {
           "category": "trigger words",
           "type": "string",
           "default": "@out[\\s],@out-file[\\s],@out-line[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `red`."
         },
-        "instructions-manager.default.words.green": {
+        "insightweaver.default.words.green": {
           "category": "trigger words",
           "type": "string",
           "default": "@instr\\-header[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `green`."
         },
-        "instructions-manager.default.words.blue": {
+        "insightweaver.default.words.blue": {
           "category": "trigger words",
           "type": "string",
           "default": "@world[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `blue`."
         },
-        "instructions-manager.default.words.purple": {
+        "insightweaver.default.words.purple": {
           "category": "trigger words",
           "type": "string",
           "default": "@plot[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `purple`."
         },
-        "instructions-manager.default.words.brown": {
+        "insightweaver.default.words.brown": {
           "category": "trigger words",
           "type": "string",
           "default": "",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `brown`."
         },
-        "instructions-manager.default.words.sky": {
+        "insightweaver.default.words.sky": {
           "category": "trigger words",
           "type": "string",
           "default": "@character[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `sky`."
         },
-        "instructions-manager.default.words.lime": {
+        "insightweaver.default.words.lime": {
           "category": "trigger words",
           "type": "string",
           "default": "@facts[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `lime`."
         },
-        "instructions-manager.default.words.yellow": {
+        "insightweaver.default.words.yellow": {
           "category": "trigger words",
           "type": "string",
           "default": "@summarize\\((.*?)\\)[\\s],@end-summarize",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `yellow`."
         },
-        "instructions-manager.exceptions.words.ignore": {
+        "insightweaver.exceptions.words.ignore": {
           "category": "exceptions",
           "type": "string",
           "default": "",
-          "markdownDescription": "A comma-separated list of tags/trigger words (`instructions-manager.words`) that will not be decorated."
+          "markdownDescription": "A comma-separated list of tags/trigger words (`insightweaver.words`) that will not be decorated."
         },
-        "instructions-manager.exceptions.file.extensions.ignore": {
+        "insightweaver.exceptions.file.extensions.ignore": {
           "category": "exceptions",
           "type": "string",
           "default": "",
           "markdownDescription": "A comma-separated list of file extensions to ignore (e.g. .java)."
         },
-        "instructions-manager.expert.custom.styles": {
+        "insightweaver.expert.custom.styles": {
           "category": "expert",
           "type": "object",
           "default": {},
           "description": "Specify Custom Decoration Profiles",
           "properties": {}
         },
-        "instructions-manager.expert.custom.words.mapping": {
+        "insightweaver.expert.custom.words.mapping": {
           "category": "expert",
           "type": "object",
           "default": {},
           "description": "Assigns tags/trigger words to decoration profiles",
           "properties": {}
         },
-        "instructions-manager.search.includes": {
+        "insightweaver.search.includes": {
           "type": "array",
           "default": [
             "**/*"
@@ -342,7 +342,7 @@
             ]
           }
         },
-        "instructions-manager.search.excludes": {
+        "insightweaver.search.excludes": {
           "type": "array",
           "default": [
             "**/.git/**",
@@ -371,19 +371,19 @@
             ]
           }
         },
-        "instructions-manager.search.maxFiles": {
+        "insightweaver.search.maxFiles": {
           "type": "number",
           "default": 5120,
           "description": "Max files for searching"
         },
-        "instructions-manager.view.files.inFiles=": {
+        "insightweaver.view.files.inFiles=": {
           "category": "view",
           "type": "boolean",
           "default": false,
           "order": 3,
           "markdownDescription": "Use .instructions files with tags and processed instructions for debugging purposes  or others."
         },
-        "instructions-manager.view.files.workspace": {
+        "insightweaver.view.files.workspace": {
           "category": "view",
           "type": "boolean",
           "default": false,

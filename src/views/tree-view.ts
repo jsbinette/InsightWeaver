@@ -90,7 +90,7 @@ export class TreeWebviewProvider implements vscode.WebviewViewProvider {
 
     private addReceiveMessageEvents(webview: vscode.Webview) {
         webview.onDidReceiveMessage((message: { command: string, args?: any[] }) => {
-            vscode.commands.executeCommand("instructions-manager." + message.command, ...(message.args || []))
+            vscode.commands.executeCommand("insightweaver." + message.command, ...(message.args || []))
         })
     }
 }
