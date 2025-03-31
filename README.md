@@ -53,6 +53,26 @@ InsightWeaver integrates seamlessly into your workflow. To activate it:
 Ensure you have a folder opened in VSCode (File → Open Folder). InsightWeaver relies on workspace context.
 2. Start Your First Chat
 Click the InsightWeaver icon in the VSCode sidebar to initiate a chat session or an image conversation. Once initiated, the extension activates and loads your tagged instructions automatically.
+3. Enter your openAI API key
+
+### To start creating dynamic instructions for your AI chats:
+
+1. **Create a Text File**  
+   In your opened workspace, create a new text file or open an existing one.
+
+2. **Known Tags**
+    Some tags are already configured in the extension.  You can add your own tags in the settings.  The default tags are:
+    - `@out` - This tag will be used to mark the text that you want to be included in the AI instructions.
+    - `@out-file` - This tag will be used to mark the text that you want to be included in the AI instructions and also in the file name.
+    - `@overview`,`@general`, `@concept`, `@facts` - These tags will be used to mark the text that you want to be included in the AI instructions and also in the overview of the project.
+    - `@character`,`@plot`, `@world`  - These tags will be used to mark the text that you want to be included in the AI instructions and also in a storyboard or book project.
+
+2. **Add Known Tags**  
+   Add at least one "known" tag into your file. Tags are customizable keywords listed (and editable) under InsightWeaver’s settings in VSCode.
+
+   For example:
+   ```markdown
+    @charater This text will become part of the AI instructions when using the character tag.
 
 ## Ideal Use Cases
 

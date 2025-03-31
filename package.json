@@ -2,7 +2,7 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
@@ -87,7 +87,7 @@
       {
         "command": "insightweaver.refresh",
         "title": "Quick-Refresh View",
-        "category": "Instructions",
+        "category": "InsightWeaver",
         "icon": {
           "light": "images/refresh-light.svg",
           "dark": "images/refresh-dark.svg"
@@ -96,7 +96,7 @@
       {
         "command": "insightweaver.showFilesModeAllVisibleEditors",
         "title": "Show Tags for All Open Tabs",
-        "category": "Instructions",
+        "category": "InsightWeaver",
         "icon": {
           "light": "images/toggle-files-light.svg",
           "dark": "images/toggle-files-dark.svg"
@@ -105,7 +105,7 @@
       {
         "command": "insightweaver.showFilesModeOnlyActiveEditor",
         "title": "Show Tags for Active File",
-        "category": "Instructions",
+        "category": "InsightWeaver",
         "icon": {
           "light": "images/toggle-files-light.svg",
           "dark": "images/toggle-files-dark.svg"
@@ -114,13 +114,13 @@
       {
         "command": "insightweaver.toggleViewKeepFilesExpanded",
         "title": "Toggle: Keep File View expanded",
-        "category": "Instructions",
+        "category": "InsightWeaver",
         "icon": "images/toggle-expanded.svg"
       },
       {
         "command": "insightweaver.scanWorkspace",
         "title": "Scan Workspace for Tags",
-        "category": "Instructions",
+        "category": "InsightWeaver",
         "icon": {
           "light": "images/scan-workspace.svg",
           "dark": "images/scan-workspace-dark.svg"
@@ -129,12 +129,12 @@
       {
         "command": "insightweaver.debug.state.reset",
         "title": "Reset the internal state to fix potential problems",
-        "category": "Instructions"
+        "category": "InsightWeaver"
       },
       {
         "command": "insightweaver.reloadWordsAndStyles",
         "title": "DOES NOT WORK Reload Tag Names and Colors (styles)",
-        "category": "Instructions"
+        "category": "InsightWeaver"
       }
     ],
     "keybindings": [
@@ -189,7 +189,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "Instructions Manager",
+      "title": "InsightWeaver",
       "properties": {
         "insightweaver.enable": {
           "category": "general",
@@ -280,19 +280,19 @@
         "insightweaver.default.words.brown": {
           "category": "trigger words",
           "type": "string",
-          "default": "",
+          "default": "@general[\\s],@concept[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `brown`."
         },
         "insightweaver.default.words.sky": {
           "category": "trigger words",
           "type": "string",
-          "default": "@character[\\s]",
+          "default": "@character[\\s],@must-have[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `sky`."
         },
         "insightweaver.default.words.lime": {
           "category": "trigger words",
           "type": "string",
-          "default": "@facts[\\s]",
+          "default": "@facts[\\s],@component[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `lime`."
         },
         "insightweaver.default.words.yellow": {
@@ -351,7 +351,7 @@
             "**/dist/**",
             "**/build/**",
             "**/.vscode/**",
-            "**/.instructions/**",
+            "**/.InsightWeaver/**",
             "**/.github/**",
             "**/_output/**",
             "**/*.min.*",
@@ -381,7 +381,7 @@
           "type": "boolean",
           "default": false,
           "order": 3,
-          "markdownDescription": "Use .instructions files with tags and processed instructions for debugging purposes  or others."
+          "markdownDescription": "Use .InsightWeaver files with tags and processed instructions for debugging purposes  or others."
         },
         "insightweaver.view.files.workspace": {
           "category": "view",
