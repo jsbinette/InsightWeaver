@@ -2,9 +2,9 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "license": "GPLv3",
-  "publisher": "jsbinette",
+  "publisher": "Jean-SebastienBinette",
   "bugs": {
     "url": "https://github.com/jsbinette/insightweaver/issues",
     "email": "jsbinette@yahoo.com"
