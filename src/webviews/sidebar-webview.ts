@@ -30,11 +30,11 @@ function main() {
         switch (message.command) {
             case 'settings-exist':
                 apiKeyTextField.value = message.data.apiKey
-                temperatureTextField.value = message.data.temperature
-                imageSizeTextField.value = message.data.imageSize
+                temperatureTextField.value = message.data.temperature || "1"
+                imageSizeTextField.value = message.data.imageSize || "1792x1024"
                 modelSelect.innerHTML = ""
                 // Populate options dynamically
-                message.data.models = message.data.models || ["gpt-4o","gpt-4o-mini","o3-mini","o1","gpt-4.5-preview"]
+                message.data.models = ["gpt-4o","gpt-4o-mini","o3-mini","o1","gpt-4.5-preview"]
                 message.data.models.forEach( (optionText:string) => {
                     const optionElement = document.createElement("option")
                     optionElement.value = optionText; // Set the value
