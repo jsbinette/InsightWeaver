@@ -7,7 +7,6 @@ import { ChatGptPanel } from './panels/main-panel'
 import { SideBarViewProvider } from './views/sidebar-view'
 import { TreeWebviewProvider, editorJumptoRange } from './views/tree-view'
 import { getStoreData, getExtensionConfig } from './utilities/utility.service'
-import { registerContextMenuCommands } from './utilities/context-menu-command'
 import { TagsController } from './utilities/tagsController'
 import { TreeDataModel } from './utilities/treeDataModel'
 import { GitIgnore } from './utilities/gitignore'
@@ -37,10 +36,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(SideBarViewProvider.viewType, provider, { webviewOptions: { retainContextWhenHidden: true } })
 	)
-
-	// Context Menu Commands
-	const storeData = getStoreData(context)
-	registerContextMenuCommands(storeData.apiKey)
 
 
 	/** Register commands */

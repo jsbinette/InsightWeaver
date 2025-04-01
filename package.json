@@ -2,7 +2,7 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
@@ -33,9 +33,26 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.start",
-    "onCommand:insightweaver.jumpToRange"
-  ],
+  "onCommand:insightweaver.jumpToRange",
+  "onCommand:insightweaver.start",
+  "onCommand:insightweaver.start-image",
+  "onCommand:insightweaver.refactor",
+  "onCommand:insightweaver.addComments",
+  "onCommand:insightweaver.addDocumentaion",
+  "onCommand:insightweaver.refresh",
+  "onCommand:insightweaver.showFilesModeAllVisibleEditors",
+  "onCommand:insightweaver.showFilesModeOnlyActiveEditor",
+  "onCommand:insightweaver.toggleViewKeepFilesExpanded",
+  "onCommand:insightweaver.debug.state.reset",
+  "onCommand:insightweaver.reloadWordsAndStyles",
+  "onCommand:insightweaver.chooseGroupBy",
+  "onCommand:insightweaver.goToTag",
+  "onCommand:insightweaver.rootToggle",
+  "onCommand:insightweaver.outGroupToggle",
+  "onCommand:insightweaver.outToggle",
+  "onCommand:insightweaver.draggedRootElement",
+  "onCommand:insightweaver.scanWorkspace"
+],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -256,7 +273,7 @@
         "insightweaver.default.words.red": {
           "category": "trigger words",
           "type": "string",
-          "default": "@out[\\s],@out-file[\\s],@out-line[\\s]",
+          "default": "@out[\\s],@out-file[\\s],@out-line[\\s],@important[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `red`."
         },
         "insightweaver.default.words.green": {

@@ -31,7 +31,7 @@ const webViewConfig = {
 };
 
 const utilitiesConfig = {
-    entryPoints: ['src/utilities/chat-gpt-api.service.ts', 'src/utilities/context-menu-command.ts', 'src/utilities/utility.service.ts','src/utilities/tagsController.ts','src/utilities/instructionsController.ts', 'src/utilities/gitignore.ts'],
+    entryPoints: ['src/utilities/chat-gpt-api.service.ts', 'src/utilities/utility.service.ts','src/utilities/tagsController.ts','src/utilities/instructionsController.ts', 'src/utilities/gitignore.ts'],
     bundle: true,
     sourcemap: true,
     external: ['vscode'],
