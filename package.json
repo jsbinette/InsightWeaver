@@ -2,7 +2,7 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
@@ -279,43 +279,43 @@
         "insightweaver.default.words.green": {
           "category": "trigger words",
           "type": "string",
-          "default": "@instr\\-header[\\s]",
+          "default": "@instr\\-header[\\s],@first[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `green`."
         },
         "insightweaver.default.words.blue": {
           "category": "trigger words",
           "type": "string",
-          "default": "@world[\\s]",
+          "default": "@world[\\s],@concept[\\s],@note[\\s],@second[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `blue`."
         },
         "insightweaver.default.words.purple": {
           "category": "trigger words",
           "type": "string",
-          "default": "@plot[\\s]",
+          "default": "@plot[\\s],@overview[\\s],@concepts[\\s],@notes[\\s],@third[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `purple`."
         },
         "insightweaver.default.words.brown": {
           "category": "trigger words",
           "type": "string",
-          "default": "@general[\\s],@concept[\\s]",
+          "default": "@general[\\s],@fourth[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `brown`."
         },
         "insightweaver.default.words.sky": {
           "category": "trigger words",
           "type": "string",
-          "default": "@character[\\s],@must-have[\\s]",
+          "default": "@character[\\s],@must-have[\\s],@fifth[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `sky`."
         },
         "insightweaver.default.words.lime": {
           "category": "trigger words",
           "type": "string",
-          "default": "@facts[\\s],@component[\\s]",
+          "default": "@facts[\\s],@components[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `lime`."
         },
         "insightweaver.default.words.yellow": {
           "category": "trigger words",
           "type": "string",
-          "default": "@summarize\\((.*?)\\)[\\s],@end-summarize",
+          "default": "@summarize\\((.*?)\\)[\\s],@end-summarize,@fact[\\s],@component[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `yellow`."
         },
         "insightweaver.exceptions.words.ignore": {

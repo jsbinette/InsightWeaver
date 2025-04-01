@@ -69,7 +69,8 @@ Bring a deeper level of intelligence, organization, and creativity to your VSCod
 
 2. **Known Tags**
     Some tags are already configured in the extension.  You can add your own tags in the settings.  The default tags are:
-    - `@overview`,`@general`, `@concept`, `@facts`, `@instr-header`, `@must-have`, `@important` - These tags will be used to mark the text that you want to be included in the AI instructions and also in the overview of the project.
+    - `@overview`,`@general`, `@instr-header`, `@must-have`, `@important` - These tags will be used to mark the text that you want to be included in the AI instructions.
+    - `@component`, `@components`,`@concept`,`@concepts`, `@fact`,`@facts`,`@note`, `@notes` `@first`, `@second`, `@third`, `@fourth`, `@fifth` - These numerical tags will be used to mark the text that you want to be included in the AI instructions.
     - `@character`,`@plot`, `@world`  - These tags will be used to mark the text that you want to be included in the AI instructions and also in a storyboard or book project.
     - `@out`,`@out-line`,`@out-file` - See in "The working of Tags" above.
 
