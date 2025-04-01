@@ -2,7 +2,7 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
