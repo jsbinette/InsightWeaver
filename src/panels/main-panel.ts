@@ -244,8 +244,12 @@ export class ChatGptPanel {
         function encodeFileToBase64(filePath: string): Promise<string> {
             return new Promise((resolve, reject) => {
                 fs.readFile(filePath, (err, data) => {
+                    const ext = path.extname(filePath).slice(1).toLowerCase()
                     if (err) reject(err)
-                    else resolve(`data:image/${path.extname(filePath).slice(1)};base64,${data.toString('base64')}`)
+                    else if (!['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) {
+                        return reject(new Error("Unsupported image type"))
+                    }
+                    resolve(`data:image/${ext};base64,${data.toString('base64')}`)
                 })
             })
         }

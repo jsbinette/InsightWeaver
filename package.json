@@ -2,7 +2,7 @@
   "name": "insightweaver",
   "displayName": "InsightWeaver",
   "description": "Customizable Instructions Tags for LLM",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
@@ -309,7 +309,7 @@
         "insightweaver.default.words.lime": {
           "category": "trigger words",
           "type": "string",
-          "default": "@facts[\\s],@components[\\s]",
+          "default": "@facts[\\s],@components[\\s],@response[\\s]",
           "markdownDescription": "A comma-separated list of tags/trigger words (regex accepted) to highlight `lime`."
         },
         "insightweaver.default.words.yellow": {

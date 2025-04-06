@@ -168,7 +168,9 @@ function main() {
                         if (imageContents.length > 0) {
                             imageContents.forEach((imgObj) => {
                                 const img = document.createElement('img')
-                                img.src = imgObj.image_url.url
+                                if (isSafeImageBase64(imgObj.image_url.url)) {
+                                    img.src = imgObj.image_url.url
+                                }
                                 //img.style.maxWidth = '150px'
                                 img.style.maxHeight = '150px'
                                 img.style.margin = '5px'
@@ -222,7 +224,9 @@ function handleAskClick(): void {
     data.appendChild(questionSpan)
     droppedImages.forEach(item => {
         const img = document.createElement("img")
-        img.src = item.image_url.url
+        if (isSafeImageBase64(item.image_url.url)) {
+            img.src = item.image_url.url
+        }
         //img.style.maxWidth = "150px"
         img.style.maxHeight = "150px"
         img.style.margin = "5px"
@@ -288,7 +292,9 @@ function renderFileList() {
         li.style.borderBottom = "1px solid #ccc"
 
         const img = document.createElement("img")
-        img.src = item.image_url.url
+        if (isSafeImageBase64(item.image_url.url)) {
+            img.src = item.image_url.url
+        }
         //img.style.maxWidth = "150px"
         img.style.maxHeight = "150px"
         img.style.marginRight = "10px"
@@ -385,7 +391,9 @@ function createHistoryElement(htmlElement: HTMLElement, content: ContentItem[]) 
         imageContainer.className = "image-container"
         images.forEach((imgObj) => {
             const img = document.createElement('img')
-            img.src = imgObj.image_url.url
+            if (isSafeImageBase64(imgObj.image_url.url)) {
+                img.src = imgObj.image_url.url
+            }
             //img.style.maxWidth = '150px'
             img.style.maxHeight = '150px'
             img.style.margin = '5px'
@@ -567,6 +575,10 @@ function showProgressRing() {
     // add progress ring.
     const progressRing = document.getElementById("progress-ring-id") as ProgressRing
     progressRing.style.display = 'inline-block'
+}
+
+function isSafeImageBase64(dataUrl: string): boolean {
+    return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+={0,2}$/.test(dataUrl)
 }
 
 /**
