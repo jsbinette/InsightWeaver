@@ -155,12 +155,12 @@ function main() {
                     hideProgressRing()
                     imageContainer.innerHTML = ''; // Clear previous images
                     if (typeof (message.data) === 'string') {
-                        instructions.innerHTML = message.data
+                        instructions.textContent = message.data
                     } else {
                         //message.data is an array of of ojbects, one of them should by of type text
                         const textContent = message.data.find((c: ContentItem) => c.type === 'text')
                         if (textContent) {
-                            instructions.innerHTML = textContent.text
+                            instructions.textContent = textContent.text
                         }
                         const imageContents = (message.data as ContentItem[]).filter(
                             (c): c is Extract<ContentItem, { type: "image_url" }> => c.type === "image_url"
@@ -500,9 +500,13 @@ function updateImageList(imageUrls: any[]) {
                 const aTag = document.createElement('a')
                 aTag.target = '_blank'
                 aTag.href = img.url
-
+                if (isSafeImageBase64(img.url)) {
+                    aTag.href = img.url
+                }
                 const imgNode = document.createElement('img')
-                imgNode.src = img.url
+                if (isSafeImageBase64(img.url)) {
+                    imgNode.src  = img.url
+                }
                 imgNode.width = 400
                 imgNode.height = 400
                 imgNode.alt = promptTextArea.value + '-' + index

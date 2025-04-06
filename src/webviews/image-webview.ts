@@ -91,10 +91,15 @@ function updateImageList(imageUrls: any[]) {
 
                 const aTag = document.createElement('a')
                 aTag.target = '_blank'
-                aTag.href = img.url
+                if (isSafeImageBase64(img.url)) {
+                    aTag.href = img.url
+                }
+                aTag.style.cursor = 'pointer'
 
                 const imgNode = document.createElement('img')
-                imgNode.src = img.url
+                if (isSafeImageBase64(img.url)) {
+                    imgNode.src = img.url
+                }
                 imgNode.width = 400
                 imgNode.height = 400
                 imgNode.alt = promptTextArea.value + '-' + index
@@ -168,4 +173,8 @@ function showProgressRing() {
 function hideProgressRing() {
     const progressRing = document.getElementById("progress-ring-id") as ProgressRing
     progressRing.style.display = 'none'
+}
+
+function isSafeImageBase64(dataUrl: string): boolean {
+    return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+={0,2}$/.test(dataUrl)
 }
