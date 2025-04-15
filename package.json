@@ -1,9 +1,8 @@
 {
   "name": "insightweaver",
   "displayName": "InsightWeaver",
-  "description": 
-  "Customizable Instructions Tags for LLM",
-  "version": "0.2.3",
+  "description": "Customizable Instructions Tags for LLM",
+  "version": "0.2.4",
   "license": "GPLv3",
   "publisher": "Jean-SebastienBinette",
   "bugs": {
@@ -11,9 +10,9 @@
     "email": "jsbinette@yahoo.com"
   },
   "homepage": "https://github.com/jsbinette/InsightWeaver#readme",
-"repository": {
-  "url": "https://github.com/jsbinette/InsightWeaver",
-  "type": "git"
+  "repository": {
+    "url": "https://github.com/jsbinette/InsightWeaver",
+    "type": "git"
   },
   "keywords": [
     "openai",
@@ -34,26 +33,26 @@
     "Other"
   ],
   "activationEvents": [
-  "onCommand:insightweaver.jumpToRange",
-  "onCommand:insightweaver.start",
-  "onCommand:insightweaver.start-image",
-  "onCommand:insightweaver.refactor",
-  "onCommand:insightweaver.addComments",
-  "onCommand:insightweaver.addDocumentaion",
-  "onCommand:insightweaver.refresh",
-  "onCommand:insightweaver.showFilesModeAllVisibleEditors",
-  "onCommand:insightweaver.showFilesModeOnlyActiveEditor",
-  "onCommand:insightweaver.toggleViewKeepFilesExpanded",
-  "onCommand:insightweaver.debug.state.reset",
-  "onCommand:insightweaver.reloadWordsAndStyles",
-  "onCommand:insightweaver.chooseGroupBy",
-  "onCommand:insightweaver.goToTag",
-  "onCommand:insightweaver.rootToggle",
-  "onCommand:insightweaver.outGroupToggle",
-  "onCommand:insightweaver.outToggle",
-  "onCommand:insightweaver.draggedRootElement",
-  "onCommand:insightweaver.scanWorkspace"
-],
+    "onCommand:insightweaver.jumpToRange",
+    "onCommand:insightweaver.start",
+    "onCommand:insightweaver.start-image",
+    "onCommand:insightweaver.refactor",
+    "onCommand:insightweaver.addComments",
+    "onCommand:insightweaver.addDocumentaion",
+    "onCommand:insightweaver.refresh",
+    "onCommand:insightweaver.showFilesModeAllVisibleEditors",
+    "onCommand:insightweaver.showFilesModeOnlyActiveEditor",
+    "onCommand:insightweaver.toggleViewKeepFilesExpanded",
+    "onCommand:insightweaver.debug.state.reset",
+    "onCommand:insightweaver.reloadWordsAndStyles",
+    "onCommand:insightweaver.chooseGroupBy",
+    "onCommand:insightweaver.goToTag",
+    "onCommand:insightweaver.rootToggle",
+    "onCommand:insightweaver.outGroupToggle",
+    "onCommand:insightweaver.outToggle",
+    "onCommand:insightweaver.draggedRootElement",
+    "onCommand:insightweaver.scanWorkspace"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -427,7 +426,7 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "@vscode/test-electron": "^2.3.0",
-    "esbuild": "^0.16.17",
+    "esbuild": "^0.25.2",
     "esbuild-copy-static-files": "^0.1.0",
     "eslint": "^8.36.0",
     "typescript": "^4.9.5"
