@@ -499,7 +499,6 @@ function updateImageList(imageUrls: any[]) {
 
                 const aTag = document.createElement('a')
                 aTag.target = '_blank'
-                aTag.href = img.url
                 if (isSafeImageBase64(img.url)) {
                     aTag.href = img.url
                 }

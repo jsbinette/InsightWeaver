@@ -91,15 +91,10 @@ function updateImageList(imageUrls: any[]) {
 
                 const aTag = document.createElement('a')
                 aTag.target = '_blank'
-                if (isSafeImageBase64(img.url)) {
-                    aTag.href = img.url
-                }
-                aTag.style.cursor = 'pointer'
+                aTag.href = img.url
 
                 const imgNode = document.createElement('img')
-                if (isSafeImageBase64(img.url)) {
-                    imgNode.src = img.url
-                }
+                imgNode.src = img.url
                 imgNode.width = 400
                 imgNode.height = 400
                 imgNode.alt = promptTextArea.value + '-' + index
